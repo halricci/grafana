@@ -1,0 +1,54 @@
+{
+  "name": "Blue",
+  "id": "blue",
+  "colors": {
+    "mode": "dark",
+    "border": {
+      "weak": "rgba(61, 126, 255, 0.12)",
+      "medium": "rgba(61, 126, 255, 0.20)",
+      "strong": "rgba(61, 126, 255, 0.30)"
+    },
+    "text": {
+      "primary": "#E0E8F5",
+      "secondary": "rgba(224, 232, 245, 0.75)",
+      "disabled": "rgba(224, 232, 245, 0.5)",
+      "link": "#3D7EFF",
+      "maxContrast": "#FFFFFF"
+    },
+    "primary": {
+      "main": "#3D7EFF"
+    },
+    "secondary": {
+      "main": "#1A2B4A",
+      "text": "rgba(224, 232, 245, 0.75)",
+      "border": "rgba(61, 126, 255, 0.10)"
+    },
+    "accent": {
+      "main": "#3D7EFF"
+    },
+    "background": {
+      "canvas": "#0E1A33",
+      "page": "#12203C",
+      "primary": "#152544",
+      "secondary": "#1A2B4A",
+      "elevated": "#1A2B4A"
+    },
+    "action": {
+      "hover": "rgba(61, 126, 255, 0.16)",
+      "selected": "rgba(61, 126, 255, 0.12)",
+      "selectedBorder": "#3D7EFF",
+      "focus": "rgba(61, 126, 255, 0.16)",
+      "hoverOpacity": 0.08,
+      "disabledText": "rgba(224, 232, 245, 0.5)",
+      "disabledBackground": "rgba(61, 126, 255, 0.08)",
+      "disabledOpacity": 0.38
+    },
+    "gradients": {
+      "brandHorizontal": "linear-gradient(270deg, #3D7EFF 0%, #6AA4FF 100%)",
+      "brandVertical": "linear-gradient(0.01deg, #3D7EFF 0.01%, #6AA4FF 99.99%)"
+    },
+    "contrastThreshold": 3,
+    "hoverFactor": 0.03,
+    "tonalOffset": 0.15
+  }
+}

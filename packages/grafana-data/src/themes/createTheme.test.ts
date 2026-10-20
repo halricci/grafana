@@ -52,6 +52,19 @@ describe('createTheme', () => {
     expect(theme.components.tag.colors).toEqual([{ background: '#fff', text: '#000' }]);
   });
 
+  it.each([
+    ['blue', 'Blue', '#3D7EFF', '#0E1A33'],
+    ['pink', 'Pink', '#FF4FA3', '#1A1020'],
+  ])('registers the %s extra theme', (themeId, name, primary, canvas) => {
+    const theme = getThemeById(themeId);
+
+    expect(theme.name).toBe(name);
+    expect(theme.isDark).toBe(true);
+    expect(theme.colors.primary.main).toBe(primary);
+    expect(theme.colors.accent.main).toBe(primary);
+    expect(theme.colors.background.canvas).toBe(canvas);
+  });
+
   it.each(['visual_refresh_dark', 'visual_refresh_light'])(
     'meets code editor contrast requirements for %s',
     (themeId) => {

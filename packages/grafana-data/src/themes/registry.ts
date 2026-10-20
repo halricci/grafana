@@ -2,6 +2,7 @@ import { Registry, type RegistryItem } from '../utils/Registry';
 
 import { createTheme, NewThemeOptionsSchema } from './createTheme';
 import aubergine from './themeDefinitions/aubergine.json';
+import blue from './themeDefinitions/blue.json';
 import debug from './themeDefinitions/debug.json';
 import desertbloom from './themeDefinitions/desertbloom.json';
 import deut_prot_dark from './themeDefinitions/deut_prot_dark.json';
@@ -10,6 +11,7 @@ import gildedgrove from './themeDefinitions/gildedgrove.json';
 import gloom from './themeDefinitions/gloom.json';
 import mars from './themeDefinitions/mars.json';
 import matrix from './themeDefinitions/matrix.json';
+import pink from './themeDefinitions/pink.json';
 import sapphiredusk from './themeDefinitions/sapphiredusk.json';
 import synthwave from './themeDefinitions/synthwave.json';
 import tritanopia_dark from './themeDefinitions/tritanopia_dark.json';
@@ -30,6 +32,7 @@ const compareThemeNames = new Intl.Collator().compare;
 
 const extraThemes: { [key: string]: unknown } = {
   aubergine,
+  blue,
   debug,
   desertbloom,
   deut_prot_dark,
@@ -38,6 +41,7 @@ const extraThemes: { [key: string]: unknown } = {
   gloom,
   mars,
   matrix,
+  pink,
   sapphiredusk,
   synthwave,
   tritanopia_dark,
