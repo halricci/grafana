@@ -15,11 +15,13 @@ import * as common from '@grafana/schema';
 export interface TimeSeriesLegendOptions extends common.VizLegendOptions {
   enableFacetedFilter?: boolean;
   facetedFilterPinned?: boolean;
+  showLastNotNull?: boolean;
 }
 
 export const defaultTimeSeriesLegendOptions: Partial<TimeSeriesLegendOptions> = {
   enableFacetedFilter: false,
   facetedFilterPinned: false,
+  showLastNotNull: false,
 };
 
 export interface Options extends common.OptionsWithTimezones, common.OptionsWithAnnotations {

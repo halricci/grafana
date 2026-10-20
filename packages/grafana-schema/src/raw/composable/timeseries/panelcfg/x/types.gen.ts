@@ -17,11 +17,13 @@ export const pluginVersion = "13.3.0-pre";
 export interface TimeSeriesLegendOptions extends common.VizLegendOptions {
   enableFacetedFilter?: boolean;
   facetedFilterPinned?: boolean;
+  showLastNotNull?: boolean;
 }
 
 export const defaultTimeSeriesLegendOptions: Partial<TimeSeriesLegendOptions> = {
   enableFacetedFilter: false,
   facetedFilterPinned: false,
+  showLastNotNull: false,
 };
 
 export interface Options extends common.OptionsWithTimezones, common.OptionsWithAnnotations {

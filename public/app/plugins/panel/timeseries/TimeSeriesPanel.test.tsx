@@ -163,6 +163,44 @@ describe('TimeSeriesPanel', () => {
     expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
   });
 
+  describe('legend showLastNotNull', () => {
+    // cpu ends on null so a plain "last" calc would miss 20; mem's last non-null is 4, not the earlier 1.
+    const frameWithNulls = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+        { name: 'cpu', type: FieldType.number, values: [10, 20, null], config: { custom: {} } },
+        { name: 'mem', type: FieldType.number, values: [1, null, 4], config: { custom: {} } },
+      ],
+    });
+
+    it('shows each series last non-null value when showLastNotNull is enabled', () => {
+      renderPanel({ legend: { ...defaultOptions.legend, showLastNotNull: true } }, [frameWithNulls]);
+
+      const legend = screen.getByTestId(selectors.components.VizLayout.legend);
+      expect(within(legend).getByText('Last *: 20')).toBeInTheDocument();
+      expect(within(legend).getByText('Last *: 4')).toBeInTheDocument();
+    });
+
+    it('keeps other calculations and does not repeat last non-null when it is already selected', () => {
+      renderPanel({ legend: { ...defaultOptions.legend, showLastNotNull: true, calcs: ['min', 'lastNotNull'] } }, [
+        frameWithNulls,
+      ]);
+
+      const legend = screen.getByTestId(selectors.components.VizLayout.legend);
+      expect(within(legend).getByText('Min: 10')).toBeInTheDocument();
+      expect(within(legend).getAllByText('Last *: 20')).toHaveLength(1);
+      expect(within(legend).getByText('Last *: 4')).toBeInTheDocument();
+    });
+
+    it('omits last non-null values when showLastNotNull is disabled', () => {
+      renderPanel({ legend: { ...defaultOptions.legend, showLastNotNull: false } }, [frameWithNulls]);
+
+      const legend = screen.getByTestId(selectors.components.VizLayout.legend);
+      expect(within(legend).getByTestId(selectors.components.VizLegend.seriesName('cpu'))).toBeInTheDocument();
+      expect(within(legend).queryByText(/Last \*:/)).not.toBeInTheDocument();
+    });
+  });
+
   describe('null values in the time field (#130379)', () => {
     // A frame whose time field carries null cells must route to the error view
     // instead of reaching the chart, where zoom-to-data would propagate a null

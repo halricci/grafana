@@ -32,6 +32,17 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
       showIf: (c) => c.legend.showLegend,
     });
 
+    builder.addBooleanSwitch({
+      path: 'legend.showLastNotNull',
+      name: t('timeseries.legend.name-show-last-not-null', 'Show last non-null value'),
+      category: legendCategory,
+      description: t(
+        'timeseries.legend.description-show-last-not-null',
+        'Display the last non-null value for each series in the legend'
+      ),
+      showIf: (c) => c.legend.showLegend,
+    });
+
     builder.addCustomEditor({
       id: 'timezone',
       name: t('timeseries.name-time-zone', 'Time zone'),
