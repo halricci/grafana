@@ -3,7 +3,7 @@ import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceListItem, type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   type CorrelationData,
@@ -11,6 +11,7 @@ import {
   type FetchError,
   isFetchError,
   reportInteraction,
+  useDataSourceInstanceList,
 } from '@grafana/runtime';
 import {
   Badge,
@@ -90,6 +91,15 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
   };
 
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+  const excludeBuiltInDataSources = useCallback((item: DataSourceInstanceListItem) => !item.meta.builtIn, []);
+  const {
+    items: dataSources,
+    isLoading: isLoadingDataSources,
+    error: dataSourcesError,
+  } = useDataSourceInstanceList({ all: true, filter: excludeBuiltInDataSources });
+  // Only treat as "no data sources" after a successful empty load; keep Add correlation while
+  // loading or if the list request fails.
+  const hasDataSources = isLoadingDataSources || Boolean(dataSourcesError) || dataSources.length > 0;
   const corrData = correlations?.correlations ?? [];
   const hasWritable = corrData.some(negate(isCorrelationsReadOnly));
 
@@ -209,7 +219,11 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
             </div>
           )}
           {showEmptyListCTA && (
-            <EmptyCorrelationsCTA canWriteCorrelations={canWriteCorrelations} onClick={() => setIsAdding(true)} />
+            <EmptyCorrelationsCTA
+              canWriteCorrelations={canWriteCorrelations}
+              hasDataSources={hasDataSources}
+              onClick={() => setIsAdding(true)}
+            />
           )}
           {
             // This error is not actionable, it'd be nice to have a recovery button
