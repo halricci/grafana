@@ -8089,6 +8089,15 @@
       "hide-time-picker": "Hide time picker",
       "now-delay-description": "Exclude recent data that may be incomplete.",
       "now-delay-label": "Now delay",
+      "personal-ranges-add": "Add range",
+      "personal-ranges-description": "Saved in this browser and shown in every dashboard time picker. Adding or removing one does not change this dashboard.",
+      "personal-ranges-empty": "No saved ranges yet.",
+      "personal-ranges-from": "Quick range from",
+      "personal-ranges-invalid": "Enter a date or a relative time such as now-1h.",
+      "personal-ranges-label": "Your quick ranges",
+      "personal-ranges-order": "\"From\" must be before \"To\".",
+      "personal-ranges-remove": "Remove {{display}}",
+      "personal-ranges-to": "Quick range to",
       "refresh-live-dashboards-description": "Continuously update panels when the time range includes the current time",
       "refresh-live-dashboards-label": "Refresh live dashboards",
       "time-options-label": "Time options",
@@ -16970,12 +16979,27 @@
       "tooltip-copy": "Copy time range to clipboard",
       "tooltip-paste": "Paste time range"
     },
+    "dashboard": {
+      "empty": "This dashboard has no quick ranges.",
+      "title": "Dashboard"
+    },
     "footer": {
       "change-settings-button": "Change time settings",
       "fiscal-year-option": "Fiscal year",
       "fiscal-year-start": "Fiscal year start month",
       "time-zone-option": "Time zone",
       "time-zone-selection": "Time zone selection"
+    },
+    "personal": {
+      "caption": "Saved in this browser",
+      "empty": "No saved ranges yet.",
+      "remove": "Remove {{display}}",
+      "save": "Save current range",
+      "saved": "Saved to your ranges",
+      "title": "Your ranges"
+    },
+    "quick": {
+      "title": "Quick ranges"
     },
     "range-content": {
       "apply-button": "Apply time range",
