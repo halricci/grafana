@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { CollapsableSection, Field, Input, Switch, TimeZonePicker, type WeekStart, WeekStartPicker } from '@grafana/ui';
 
 import { AutoRefreshIntervals } from './AutoRefreshIntervals';
+import { PersonalQuickRangesSettings } from './PersonalQuickRangesSettings';
 
 interface Props {
   onWeekStartChange: (weekStart?: WeekStart) => void;
@@ -77,6 +78,7 @@ export const TimePickerSettings = memo(
 
     return (
       <CollapsableSection label={t('dashboard-settings.time-picker.time-options-label', 'Time options')} isOpen={true}>
+        <PersonalQuickRangesSettings />
         <Field
           label={t('dashboard-settings.time-picker.time-zone-label', 'Time zone')}
           data-testid={selectors.components.TimeZonePicker.containerV2}

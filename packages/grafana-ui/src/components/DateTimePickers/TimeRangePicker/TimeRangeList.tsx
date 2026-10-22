@@ -12,15 +12,20 @@ import { useListFocus } from './hooks';
 
 interface Props {
   title?: string;
+  description?: string;
   options: TimeOption[];
   value?: TimeOption;
   onChange: (option: TimeOption) => void;
   placeholderEmpty?: ReactNode;
+  onSave?: (option: TimeOption) => void;
+  onRemove?: (option: TimeOption) => void;
+  isSaved?: (option: TimeOption) => boolean;
+  testId?: string;
 }
 
 export const TimeRangeList = (props: Props) => {
   const styles = useStyles2(getStyles);
-  const { title, options, placeholderEmpty } = props;
+  const { title, description, options, placeholderEmpty, testId } = props;
 
   if (typeof placeholderEmpty !== 'undefined' && options.length <= 0) {
     return <>{placeholderEmpty}</>;
@@ -31,10 +36,13 @@ export const TimeRangeList = (props: Props) => {
   }
 
   return (
-    <section aria-label={title}>
+    <section aria-label={title} data-testid={testId}>
       <fieldset>
         <div className={styles.title}>
-          <TimePickerTitle>{title}</TimePickerTitle>
+          <div>
+            <TimePickerTitle>{title}</TimePickerTitle>
+            {description && <p className={styles.description}>{description}</p>}
+          </div>
         </div>
         <Options {...props} />
       </fieldset>
@@ -42,7 +50,7 @@ export const TimeRangeList = (props: Props) => {
   );
 };
 
-const Options = ({ options, value, onChange, title }: Props) => {
+const Options = ({ options, value, onChange, title, onSave, onRemove, isSaved }: Props) => {
   const styles = useStyles2(getOptionsStyles);
 
   const localRef = useRef<HTMLUListElement>(null);
@@ -64,6 +72,8 @@ const Options = ({ options, value, onChange, title }: Props) => {
             selected={isEqual(option, value)}
             onSelect={onChange}
             name={title ?? t('time-picker.time-range.default-title', 'Time ranges')}
+            onSave={onSave && !isSaved?.(option) ? onSave : undefined}
+            onRemove={onRemove}
           />
         ))}
       </ul>
@@ -82,12 +92,18 @@ function isEqual(x: TimeOption, y?: TimeOption): boolean {
   return y.from === x.from && y.to === x.to;
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   title: css({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '8px 16px 5px 9px',
+  }),
+  description: css({
+    margin: theme.spacing(0.5, 0, 0),
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightRegular,
   }),
 });
 

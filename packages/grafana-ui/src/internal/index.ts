@@ -118,4 +118,11 @@ export { getSourceFrameIndex } from '../components/Table/TableNG/transformations
 
 export { getInternalRadius, getExternalRadius } from '../themes/mixins';
 export { BrandingContext, useBranding, type BrandingContextValue } from '../components/Branding/BrandingContext';
+export {
+  MAX_PERSONAL_QUICK_RANGES,
+  PERSONAL_QUICK_RANGES_STORAGE_KEY,
+  normalizeQuickRange,
+  usePersonalQuickRanges,
+  type SavePersonalQuickRangeResult,
+} from '../components/DateTimePickers/TimeRangePicker/personalQuickRanges';
 export { DRAWER_INSIDE_ATTRIBUTE } from '../components/Drawer/Drawer';
