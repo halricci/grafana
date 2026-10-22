@@ -20,6 +20,7 @@ import {
 import { AppNotificationSeverity } from 'app/types/appNotifications';
 import { DashboardRoutes } from 'app/types/dashboard';
 
+import { DashboardQuickRangeProvider } from '../scene/DashboardQuickRangeProvider';
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { getDashboardScenePageStateManager, type LoadError } from './DashboardScenePageStateManager';
@@ -109,7 +110,9 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
         </Stack>
         {!hideTimeControls && (
           <Stack>
-            <timePicker.Component model={timePicker} />
+            <DashboardQuickRangeProvider timePicker={timePicker}>
+              <timePicker.Component model={timePicker} />
+            </DashboardQuickRangeProvider>
             <refreshPicker.Component model={refreshPicker} />
           </Stack>
         )}
