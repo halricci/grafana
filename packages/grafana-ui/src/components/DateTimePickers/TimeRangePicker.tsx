@@ -248,7 +248,8 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                   hideTimeZone={hideTimeZone}
                   value={value}
                   onChange={onChange}
-                  quickOptions={quickRanges || getQuickOptions()}
+                  quickOptions={quickRanges ?? getQuickOptions()}
+                  quickRangeSource={quickRanges != null ? 'dashboard' : 'builtin'}
                   history={history}
                   showHistory
                   widthOverride={widthOverride}
