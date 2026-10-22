@@ -21,13 +21,15 @@ import { Icon } from '../../Icon/Icon';
 import { TextLink } from '../../Link/TextLink';
 import { type WeekStart } from '../WeekStartPicker';
 
+import { PersonalTimeRangeSection } from './PersonalTimeRangeSection';
+import { type PersonalRangeProps, useResolvedPersonalRanges } from './PersonalTimeRangesContext';
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeContent } from './TimeRangeContent';
 import { TimeRangeList } from './TimeRangeList';
 import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
 
-interface Props {
+interface Props extends PersonalRangeProps {
   value: TimeRange;
   onChange: (timeRange: TimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
@@ -77,23 +79,31 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
     (isFullscreen && showHistory) || (!isFullscreen && ((showHistory && !isHistoryEmpty) || !hideQuickRanges));
   const styles = useStyles2(getStyles, isReversed, hideQuickRanges, isContainerTall, isFullscreen);
   const historyOptions = mapToHistoryOptions(history, timeZone);
+  const personal = useResolvedPersonalRanges(props);
+  const showPersonal = personal.enabled && !hideQuickRanges;
   const baseTimeOption = useTimeOption(value.raw, quickOptions);
   const [searchTerm, setSearchQuery] = useState('');
 
-  const { filteredQuickOptions, customTimeOption } = useMemo(() => {
-    const filtered = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
+  const { filteredQuickOptions, filteredPersonalRanges, customTimeOption } = useMemo(() => {
+    const matches = (display: string) => display.toLowerCase().includes(searchTerm.toLowerCase());
+    const filtered = quickOptions.filter((o) => matches(o.display));
+    const filteredPersonal = personal.ranges.filter((o) => matches(o.display));
     const customTimeOption = isValidGrafanaDuration(searchTerm) && rangeUtil.describeTextRange(searchTerm);
 
     if (customTimeOption) {
       const alreadyExists = filtered.some((o) => o.from === customTimeOption.from && o.to === customTimeOption.to);
 
       if (!alreadyExists) {
-        return { filteredQuickOptions: [customTimeOption, ...filtered], customTimeOption };
+        return {
+          filteredQuickOptions: [customTimeOption, ...filtered],
+          filteredPersonalRanges: filteredPersonal,
+          customTimeOption,
+        };
       }
     }
 
-    return { filteredQuickOptions: filtered, customTimeOption: undefined };
-  }, [searchTerm, quickOptions]);
+    return { filteredQuickOptions: filtered, filteredPersonalRanges: filteredPersonal, customTimeOption: undefined };
+  }, [searchTerm, quickOptions, personal.ranges]);
 
   const timeOption = customTimeOption || baseTimeOption;
 
@@ -117,8 +127,25 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
             </div>
             <div className={styles.scrollContent}>
               {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
+              {showPersonal && (
+                <PersonalTimeRangeSection
+                  ranges={filteredPersonalRanges}
+                  hasSavedRanges={personal.ranges.length > 0}
+                  value={value}
+                  saveState={personal.saveState}
+                  onSave={personal.onSave}
+                  onRemove={personal.onRemove}
+                  onSelect={onChangeTimeOption}
+                />
+              )}
               {!hideQuickRanges && (
-                <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
+                <TimeRangeList
+                  title={showPersonal ? personal.dashboardLabel : undefined}
+                  testId={showPersonal ? selectors.components.TimePicker.dashboardRanges : undefined}
+                  options={filteredQuickOptions}
+                  onChange={onChangeTimeOption}
+                  value={timeOption}
+                />
               )}
             </div>
           </div>

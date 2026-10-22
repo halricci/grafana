@@ -16,11 +16,12 @@ interface Props {
   value?: TimeOption;
   onChange: (option: TimeOption) => void;
   placeholderEmpty?: ReactNode;
+  testId?: string;
 }
 
 export const TimeRangeList = (props: Props) => {
   const styles = useStyles2(getStyles);
-  const { title, options, placeholderEmpty } = props;
+  const { title, options, placeholderEmpty, testId } = props;
 
   if (typeof placeholderEmpty !== 'undefined' && options.length <= 0) {
     return <>{placeholderEmpty}</>;
@@ -31,7 +32,7 @@ export const TimeRangeList = (props: Props) => {
   }
 
   return (
-    <section aria-label={title}>
+    <section aria-label={title} data-testid={testId}>
       <fieldset>
         <div className={styles.title}>
           <TimePickerTitle>{title}</TimePickerTitle>

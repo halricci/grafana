@@ -1,12 +1,16 @@
+import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
-import { behaviors, SceneTimeRange } from '@grafana/scenes';
+import { type TimeOption } from '@grafana/data';
+import { behaviors, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import * as utils from '../pages/utils';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
+import { buildTimeSettingsSpec } from '../serialization/shared/timeSettings';
+import { PERSONAL_TIME_RANGES_STORAGE_KEY, getPersonalTimeRangesSnapshot } from '../timepicker/personalTimeRanges';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { GeneralSettingsEditView } from './GeneralSettingsEditView';
@@ -128,6 +132,64 @@ describe('GeneralSettingsEditView', () => {
       expect(await screen.findByText('Folder')).toBeInTheDocument();
     });
 
+    it('says this dashboard uses the standard ranges when it has no quick ranges of its own', async () => {
+      localStorage.removeItem(PERSONAL_TIME_RANGES_STORAGE_KEY);
+      const { settings } = await buildTestScene();
+      render(<settings.Component model={settings} />);
+
+      expect(
+        await screen.findByText(
+          'This dashboard has no quick ranges of its own. The time picker shows the standard ranges next to yours.'
+        )
+      ).toBeInTheDocument();
+      expect(screen.getByText('No saved ranges yet.')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'These ranges are saved in this browser and show up on every dashboard you open. Saving or removing one does not change this dashboard.'
+        )
+      ).toBeInTheDocument();
+      expect(screen.queryByText('Last 5 minutes')).not.toBeInTheDocument();
+    });
+
+    it('saving or removing a personal range leaves the dashboard time settings unchanged', async () => {
+      const user = userEvent.setup();
+      const quickRanges: TimeOption[] = [{ from: 'now-6h', to: 'now', display: 'Last 6 hours' }];
+      localStorage.setItem(
+        PERSONAL_TIME_RANGES_STORAGE_KEY,
+        JSON.stringify([{ from: 'now-2h', to: 'now', display: 'Last 2 hours' }])
+      );
+      const history = '[{"from":"2020-01-01T00:00:00.000Z","to":"2020-01-02T00:00:00.000Z"}]';
+      localStorage.setItem('grafana.dashboard.timepicker.history', history);
+
+      const { dashboard, settings } = await buildTestScene({}, { from: 'now-15m', to: 'now', quickRanges });
+      const timePicker = dashboard.state.controls?.state.timePicker;
+      const timeZone = dashboard.state.$timeRange?.state.timeZone;
+      const timeRange = dashboard.state.$timeRange!;
+      const controls = dashboard.state.controls!;
+      render(<settings.Component model={settings} />);
+
+      expect(await screen.findByText('Last 6 hours')).toBeInTheDocument();
+      const savedTimeSettings = buildTimeSettingsSpec(timeRange, controls);
+      expect(
+        screen.getByText(
+          'Quick ranges attached to this dashboard. They stay on the dashboard when you change your ranges.'
+        )
+      ).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Save current range' }));
+      await user.click(screen.getByRole('button', { name: 'Remove Last 2 hours' }));
+
+      expect(getPersonalTimeRangesSnapshot()).toEqual([{ from: 'now-15m', to: 'now', display: 'Last 15 minutes' }]);
+      expect(screen.getByText('Last 15 minutes')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Remove Last 2 hours' })).not.toBeInTheDocument();
+      expect(timePicker?.state.quickRanges).toBe(quickRanges);
+      expect(buildTimeSettingsSpec(timeRange, controls)).toEqual(savedTimeSettings);
+      expect(dashboard.state.$timeRange?.state.from).toBe('now-15m');
+      expect(dashboard.state.$timeRange?.state.to).toBe('now');
+      expect(dashboard.state.$timeRange?.state.timeZone).toBe(timeZone);
+      expect(localStorage.getItem('grafana.dashboard.timepicker.history')).toBe(history);
+    });
+
     it('hides the Folder field when the dashboard is a template', async () => {
       const { settings } = await buildTestScene({ canEdit: true, isDashboardTemplate: true });
       render(<settings.Component model={settings} />);
@@ -140,12 +202,17 @@ describe('GeneralSettingsEditView', () => {
   });
 });
 
-async function buildTestScene(metaOverrides: Partial<DashboardMeta> = {}) {
+async function buildTestScene(
+  metaOverrides: Partial<DashboardMeta> = {},
+  time?: { from: string; to: string; quickRanges?: TimeOption[] }
+) {
   const settings = new GeneralSettingsEditView({});
   const dashboard = new DashboardScene({
-    $timeRange: new SceneTimeRange({}),
+    $timeRange: new SceneTimeRange(time ? { from: time.from, to: time.to } : {}),
     $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Off }), new behaviors.LiveNowTimer({})],
-    controls: new DashboardControls({}),
+    controls: new DashboardControls(
+      time?.quickRanges ? { timePicker: new SceneTimePicker({ quickRanges: time.quickRanges }) } : {}
+    ),
     title: 'hello',
     uid: 'dash-1',
     meta: {
