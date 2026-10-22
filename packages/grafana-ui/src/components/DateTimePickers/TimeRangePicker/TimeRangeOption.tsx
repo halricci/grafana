@@ -3,9 +3,11 @@ import { memo, useId } from 'react';
 
 import { type GrafanaTheme2, type TimeOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
+import { IconButton } from '../../IconButton/IconButton';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -47,6 +49,14 @@ const getStyles = (theme: GrafanaTheme2) => {
         top: 0,
       },
     }),
+    labelWithRemove: css({
+      paddingRight: theme.spacing(4),
+    }),
+    remove: css({
+      position: 'absolute',
+      right: theme.spacing(0.5),
+      zIndex: 1,
+    }),
   };
 };
 
@@ -58,9 +68,10 @@ interface Props {
    *  Input identifier. This should be the same for all options in a group.
    */
   name: string;
+  onRemove?: (option: TimeOption) => void;
 }
 
-export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false, name }) => {
+export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false, name, onRemove }) => {
   const styles = useStyles2(getStyles);
   // In case there are more of the same timerange in the list
   const id = useId();
@@ -80,9 +91,25 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
         id={id}
         onChange={() => onSelect(value)}
       />
-      <label className={cx(styles.label, selected && styles.labelSelected)} htmlFor={id}>
+      <label
+        className={cx(styles.label, selected && styles.labelSelected, onRemove && styles.labelWithRemove)}
+        htmlFor={id}
+      >
         {value.display}
       </label>
+      {onRemove && (
+        <IconButton
+          className={styles.remove}
+          name="times"
+          size="sm"
+          aria-label={t('time-picker.personal.remove', 'Remove {{display}}', { display: value.display })}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onRemove(value);
+          }}
+        />
+      )}
     </li>
   );
 });
