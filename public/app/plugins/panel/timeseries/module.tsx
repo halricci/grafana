@@ -1,5 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { VizOrientation } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
@@ -20,6 +21,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
     commonOptionsBuilder.addLegendOptions(builder, true, true);
 
     const legendCategory = [t('timeseries.legend.category', 'Legend')];
+    const axisCategory = [t('timeseries.category-axis', 'Axis')];
 
     builder.addBooleanSwitch({
       path: 'legend.enableFacetedFilter',
@@ -32,14 +34,34 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
       showIf: (c) => c.legend.showLegend,
     });
 
-    builder.addCustomEditor({
-      id: 'timezone',
-      name: t('timeseries.name-time-zone', 'Time zone'),
-      path: 'timezone',
-      category: [t('timeseries.category-axis', 'Axis')],
-      editor: TimezonesEditor,
-      defaultValue: undefined,
-    });
+    builder
+      .addRadio({
+        path: 'orientation',
+        name: t('timeseries.name-orientation', 'Orientation'),
+        category: axisCategory,
+        settings: {
+          options: [
+            { value: VizOrientation.Auto, label: t('timeseries.orientation-options.label-auto', 'Auto') },
+            {
+              value: VizOrientation.Horizontal,
+              label: t('timeseries.orientation-options.label-horizontal', 'Horizontal'),
+            },
+            {
+              value: VizOrientation.Vertical,
+              label: t('timeseries.orientation-options.label-vertical', 'Vertical'),
+            },
+          ],
+        },
+        defaultValue: VizOrientation.Horizontal,
+      })
+      .addCustomEditor({
+        id: 'timezone',
+        name: t('timeseries.name-time-zone', 'Time zone'),
+        path: 'timezone',
+        category: axisCategory,
+        editor: TimezonesEditor,
+        defaultValue: undefined,
+      });
 
     addAnnotationOptions(builder);
   })

@@ -10,6 +10,7 @@ import {
   getDisplayProcessor,
   type TimeRange,
 } from '@grafana/data';
+import { ScaleOrientation, VizOrientation } from '@grafana/schema';
 import { getTheme } from '@grafana/ui';
 
 import { getXAxisConfig, preparePlotConfigBuilder, UPLOT_DEFAULT_AXIS_GAP } from './utils';
@@ -613,6 +614,19 @@ describe('cursor proximity', () => {
     const builder = buildBuilder(makeTimeFrame());
 
     expect(builder.getConfig().cursor?.focus?.prox).toBe(30);
+  });
+});
+
+describe('orientation', () => {
+  it.each([
+    { name: 'omitted', orientation: undefined, expected: ScaleOrientation.Horizontal },
+    { name: 'Auto', orientation: VizOrientation.Auto, expected: ScaleOrientation.Horizontal },
+    { name: 'Horizontal', orientation: VizOrientation.Horizontal, expected: ScaleOrientation.Horizontal },
+    { name: 'Vertical', orientation: VizOrientation.Vertical, expected: ScaleOrientation.Vertical },
+  ])('$name keeps or flips the time scale to $expected', ({ orientation, expected }) => {
+    const builder = buildBuilder(makeTimeFrame(), orientation === undefined ? {} : { orientation });
+
+    expect(builder.getConfig().scales?.x?.ori).toBe(expected);
   });
 });
 
