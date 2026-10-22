@@ -21,11 +21,13 @@ import { Icon } from '../../Icon/Icon';
 import { TextLink } from '../../Link/TextLink';
 import { type WeekStart } from '../WeekStartPicker';
 
+import { QuickRangeSections } from './QuickRangeSections';
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeContent } from './TimeRangeContent';
 import { TimeRangeList } from './TimeRangeList';
 import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
+import { usePersonalQuickRanges, type SavePersonalQuickRangeResult } from './personalQuickRanges';
 
 interface Props {
   value: TimeRange;
@@ -36,6 +38,13 @@ interface Props {
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
   quickOptions?: TimeOption[];
+  /**
+   * When set, personal quick ranges are controlled by the parent.
+   * Otherwise they are read from and written to browser storage.
+   */
+  personalQuickRanges?: TimeOption[];
+  onSavePersonalQuickRange?: (option: TimeOption) => void;
+  onRemovePersonalQuickRange?: (option: TimeOption) => void;
   history?: TimeRange[];
   showHistory?: boolean;
   className?: string;
@@ -58,6 +67,9 @@ interface FormProps extends Omit<Props, 'history'> {
 export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   const {
     quickOptions = [],
+    personalQuickRanges: controlledPersonalRanges,
+    onSavePersonalQuickRange,
+    onRemovePersonalQuickRange,
     isReversed,
     isFullscreen,
     hideQuickRanges,
@@ -77,23 +89,62 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
     (isFullscreen && showHistory) || (!isFullscreen && ((showHistory && !isHistoryEmpty) || !hideQuickRanges));
   const styles = useStyles2(getStyles, isReversed, hideQuickRanges, isContainerTall, isFullscreen);
   const historyOptions = mapToHistoryOptions(history, timeZone);
-  const baseTimeOption = useTimeOption(value.raw, quickOptions);
+  const isPersonalControlled = controlledPersonalRanges !== undefined;
+  const storedPersonal = usePersonalQuickRanges();
+  const personalQuickRanges = controlledPersonalRanges ?? storedPersonal.ranges;
+  const baseTimeOption = useTimeOption(value.raw, [...personalQuickRanges, ...quickOptions]);
   const [searchTerm, setSearchQuery] = useState('');
 
-  const { filteredQuickOptions, customTimeOption } = useMemo(() => {
-    const filtered = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
+  const { filteredQuickOptions, filteredPersonalOptions, customTimeOption } = useMemo(() => {
+    const matches = (option: TimeOption) => option.display.toLowerCase().includes(searchTerm.toLowerCase());
+    const filtered = quickOptions.filter(matches);
+    const filteredPersonal = personalQuickRanges.filter(matches);
     const customTimeOption = isValidGrafanaDuration(searchTerm) && rangeUtil.describeTextRange(searchTerm);
 
     if (customTimeOption) {
-      const alreadyExists = filtered.some((o) => o.from === customTimeOption.from && o.to === customTimeOption.to);
+      const alreadyExists =
+        filtered.some((o) => o.from === customTimeOption.from && o.to === customTimeOption.to) ||
+        filteredPersonal.some((o) => o.from === customTimeOption.from && o.to === customTimeOption.to);
 
       if (!alreadyExists) {
-        return { filteredQuickOptions: [customTimeOption, ...filtered], customTimeOption };
+        return {
+          filteredQuickOptions: [customTimeOption, ...filtered],
+          filteredPersonalOptions: filteredPersonal,
+          customTimeOption,
+        };
       }
     }
 
-    return { filteredQuickOptions: filtered, customTimeOption: undefined };
-  }, [searchTerm, quickOptions]);
+    return {
+      filteredQuickOptions: filtered,
+      filteredPersonalOptions: filteredPersonal,
+      customTimeOption: undefined,
+    };
+  }, [searchTerm, quickOptions, personalQuickRanges]);
+
+  const currentQuickOption = useMemo(
+    () => optionFromRawRange(value.raw, timeZone, quickOptions),
+    [value.raw, timeZone, quickOptions]
+  );
+
+  const savePersonal = (option: TimeOption): SavePersonalQuickRangeResult => {
+    if (isPersonalControlled) {
+      onSavePersonalQuickRange?.(option);
+      return { ok: true, ranges: personalQuickRanges };
+    }
+    return storedPersonal.save(option);
+  };
+
+  const removePersonal = (option: TimeOption) => {
+    if (isPersonalControlled) {
+      onRemovePersonalQuickRange?.(option);
+      return;
+    }
+    storedPersonal.remove(option);
+  };
+
+  const canSavePersonal = !isPersonalControlled || onSavePersonalQuickRange !== undefined;
+  const canRemovePersonal = !isPersonalControlled || onRemovePersonalQuickRange !== undefined;
 
   const timeOption = customTimeOption || baseTimeOption;
 
@@ -118,7 +169,16 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
             <div className={styles.scrollContent}>
               {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
               {!hideQuickRanges && (
-                <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
+                <QuickRangeSections
+                  quickOptions={filteredQuickOptions}
+                  personalOptions={filteredPersonalOptions}
+                  allPersonalOptions={personalQuickRanges}
+                  value={timeOption}
+                  onSelect={onChangeTimeOption}
+                  onSave={canSavePersonal ? savePersonal : undefined}
+                  onRemove={canRemovePersonal ? removePersonal : undefined}
+                  currentOption={currentQuickOption}
+                />
               )}
             </div>
           </div>
@@ -269,6 +329,24 @@ const EmptyRecentList = memo(() => {
     </div>
   );
 });
+
+function optionFromRawRange(
+  raw: RawTimeRange,
+  timeZone: TimeZone | undefined,
+  quickOptions: TimeOption[]
+): TimeOption | undefined {
+  if (typeof raw.from !== 'string' || typeof raw.to !== 'string') {
+    return undefined;
+  }
+  if (!raw.from.includes('now') || !raw.to.includes('now')) {
+    return undefined;
+  }
+  const display = rangeUtil.describeTimeRange(raw, timeZone, quickOptions);
+  if (!display) {
+    return undefined;
+  }
+  return { from: raw.from, to: raw.to, display };
+}
 
 function mapToHistoryOptions(ranges?: TimeRange[], timeZone?: TimeZone): TimeOption[] {
   if (!Array.isArray(ranges) || ranges.length === 0) {

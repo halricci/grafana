@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { dateTime, type TimeRange } from '@grafana/data';
 
 import { type PropsWithScreenSize, TimePickerContentWithScreenSize } from './TimePickerContent';
+import { PERSONAL_QUICK_RANGES_STORAGE_KEY } from './personalQuickRanges';
 
 describe('TimePickerContent', () => {
   const absoluteValue = createAbsoluteTimeRange('2019-12-17T07:48:27.433Z', '2019-12-18T07:49:27.433Z');
@@ -193,6 +194,152 @@ describe('TimePickerContent', () => {
       expect(screen.queryByText(/Last invalid/i)).not.toBeInTheDocument();
     });
   });
+
+  describe('Personal quick ranges', () => {
+    beforeEach(() => {
+      window.localStorage.clear();
+    });
+
+    const morning = { from: 'now-2h', to: 'now', display: 'Morning standup' };
+
+    it('labels personal ranges and dashboard ranges separately', async () => {
+      renderComponent({
+        value: relativeValue,
+        personalQuickRanges: [morning],
+      });
+
+      expect(screen.getByRole('region', { name: 'Your ranges' })).toHaveTextContent(
+        'Saved in this browser, not on the dashboard.'
+      );
+      expect(screen.getByRole('region', { name: 'Dashboard ranges' })).toHaveTextContent('Come from this dashboard.');
+      expect(screen.getByText('Morning standup')).toBeInTheDocument();
+      expect(screen.getByText('Last 5 minutes')).toBeInTheDocument();
+    });
+
+    it('saves a dashboard range without applying it', async () => {
+      const user = userEvent.setup();
+      const onChange = jest.fn();
+      const onSavePersonalQuickRange = jest.fn();
+      renderComponent({
+        value: relativeValue,
+        onChange,
+        personalQuickRanges: [],
+        onSavePersonalQuickRange,
+      });
+
+      await user.click(screen.getByRole('button', { name: 'Save Last 5 minutes to your ranges' }));
+
+      expect(onSavePersonalQuickRange).toHaveBeenCalledWith({
+        from: 'now-5m',
+        to: 'now',
+        display: 'Last 5 minutes',
+      });
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('saves the current relative range without applying a new one', async () => {
+      const user = userEvent.setup();
+      const onChange = jest.fn();
+      const onSavePersonalQuickRange = jest.fn();
+      renderComponent({
+        value: createRelativeTimeRange(),
+        onChange,
+        personalQuickRanges: [],
+        onSavePersonalQuickRange,
+      });
+
+      await user.click(screen.getByRole('button', { name: 'Save current range' }));
+
+      expect(onSavePersonalQuickRange).toHaveBeenCalledWith({
+        from: 'now-5m',
+        to: 'now',
+        display: 'Last 5 minutes',
+      });
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('removes a personal range without applying it or dropping recent ranges', async () => {
+      const user = userEvent.setup();
+      const onChange = jest.fn();
+      const onRemovePersonalQuickRange = jest.fn();
+      renderComponent({
+        value: absoluteValue,
+        history,
+        onChange,
+        personalQuickRanges: [morning],
+        onRemovePersonalQuickRange,
+      });
+
+      expect(screen.getByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Remove Morning standup from your ranges' }));
+
+      expect(onRemovePersonalQuickRange).toHaveBeenCalledWith(morning);
+      expect(onChange).not.toHaveBeenCalled();
+      expect(screen.getByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
+      expect(screen.getByText(/recently used absolute ranges/i)).toBeInTheDocument();
+    });
+
+    it('saves and removes a range in browser storage without applying it', async () => {
+      const user = userEvent.setup();
+      const onChange = jest.fn();
+      const history = [{ from: '2022-12-03T00:00:00.000Z', to: '2022-12-03T23:59:59.000Z' }];
+      window.localStorage.setItem('grafana.dashboard.timepicker.history', JSON.stringify(history));
+      window.localStorage.setItem(
+        PERSONAL_QUICK_RANGES_STORAGE_KEY,
+        JSON.stringify([{ from: 'now-6h', to: 'now', display: 'Last 6 hours' }])
+      );
+
+      const view = renderComponent({
+        value: relativeValue,
+        onChange,
+        personalQuickRanges: undefined,
+      });
+
+      expect(screen.getByRole('region', { name: 'Your ranges' })).toHaveTextContent('Last 6 hours');
+
+      await user.click(screen.getByRole('button', { name: 'Save Last 15 minutes to your ranges' }));
+
+      expect(onChange).not.toHaveBeenCalled();
+      expect(screen.getAllByText('Last 15 minutes')).toHaveLength(2);
+      expect(JSON.parse(window.localStorage.getItem(PERSONAL_QUICK_RANGES_STORAGE_KEY) ?? '[]')).toEqual([
+        { from: 'now-15m', to: 'now', display: 'Last 15 minutes' },
+        { from: 'now-6h', to: 'now', display: 'Last 6 hours' },
+      ]);
+      expect(JSON.parse(window.localStorage.getItem('grafana.dashboard.timepicker.history') ?? '[]')).toEqual(history);
+
+      view.unmount();
+      renderComponent({ value: relativeValue, onChange, personalQuickRanges: undefined });
+      expect(screen.getByRole('region', { name: 'Your ranges' })).toHaveTextContent('Last 15 minutes');
+      expect(screen.getByRole('region', { name: 'Your ranges' })).toHaveTextContent('Last 6 hours');
+
+      await user.click(screen.getByRole('button', { name: 'Remove Last 6 hours from your ranges' }));
+
+      expect(onChange).not.toHaveBeenCalled();
+      expect(screen.queryByText('Last 6 hours')).not.toBeInTheDocument();
+      expect(screen.getByRole('region', { name: 'Dashboard ranges' })).toHaveTextContent('Last 15 minutes');
+      expect(JSON.parse(window.localStorage.getItem(PERSONAL_QUICK_RANGES_STORAGE_KEY) ?? '[]')).toEqual([
+        { from: 'now-15m', to: 'now', display: 'Last 15 minutes' },
+      ]);
+      expect(JSON.parse(window.localStorage.getItem('grafana.dashboard.timepicker.history') ?? '[]')).toEqual(history);
+    });
+
+    it('applies a personal range when the range itself is chosen', async () => {
+      const user = userEvent.setup();
+      const onChange = jest.fn();
+      renderComponent({
+        value: relativeValue,
+        onChange,
+        personalQuickRanges: [morning],
+        onSavePersonalQuickRange: jest.fn(),
+        onRemovePersonalQuickRange: jest.fn(),
+      });
+
+      await user.click(screen.getByText('Morning standup'));
+
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ raw: { from: 'now-2h', to: 'now' } }));
+    });
+  });
 });
 
 function noop(): {} {
@@ -206,6 +353,7 @@ function renderComponent({
   history = [],
   hideQuickRanges = false,
   hideTimeZone = false,
+  ...rest
 }: Pick<PropsWithScreenSize, 'value'> & Partial<PropsWithScreenSize>): RenderResult {
   return render(
     <TimePickerContentWithScreenSize
@@ -215,6 +363,7 @@ function renderComponent({
         { from: 'now-5m', to: 'now', display: 'Last 5 minutes' },
         { from: 'now-15m', to: 'now', display: 'Last 15 minutes' },
       ]}
+      personalQuickRanges={[]}
       timeZone="utc"
       value={value}
       isFullscreen={isFullscreen}
@@ -222,6 +371,7 @@ function renderComponent({
       history={history}
       hideQuickRanges={hideQuickRanges}
       hideTimeZone={hideTimeZone}
+      {...rest}
     />
   );
 }

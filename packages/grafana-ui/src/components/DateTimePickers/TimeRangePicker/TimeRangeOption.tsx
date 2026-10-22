@@ -3,9 +3,11 @@ import { memo, useId } from 'react';
 
 import { type GrafanaTheme2, type TimeOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
+import { IconButton } from '../../IconButton/IconButton';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -47,6 +49,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         top: 0,
       },
     }),
+    action: css({
+      flexShrink: 0,
+    }),
   };
 };
 
@@ -58,9 +63,11 @@ interface Props {
    *  Input identifier. This should be the same for all options in a group.
    */
   name: string;
+  onSave?: (option: TimeOption) => void;
+  onRemove?: (option: TimeOption) => void;
 }
 
-export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false, name }) => {
+export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false, name, onSave, onRemove }) => {
   const styles = useStyles2(getStyles);
   // In case there are more of the same timerange in the list
   const id = useId();
@@ -70,6 +77,39 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
       className={styles.container}
       data-testid={selectors.components.TimePicker.timeRangeOption(value.from, value.to)}
     >
+      {onSave && (
+        <IconButton
+          className={styles.action}
+          name="bookmark"
+          size="sm"
+          tooltip={t('time-picker.quick-ranges.save-option', 'Save {{display}} to your ranges', {
+            display: value.display,
+          })}
+          data-testid={selectors.components.TimePicker.saveQuickRange(value.from, value.to)}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onSave(value);
+          }}
+        />
+      )}
+      {onRemove && (
+        <IconButton
+          className={styles.action}
+          name="times"
+          size="sm"
+          variant="destructive"
+          tooltip={t('time-picker.quick-ranges.remove-option', 'Remove {{display}} from your ranges', {
+            display: value.display,
+          })}
+          data-testid={selectors.components.TimePicker.removePersonalQuickRange(value.from, value.to)}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onRemove(value);
+          }}
+        />
+      )}
       <input
         className={styles.radio}
         checked={selected}
