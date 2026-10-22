@@ -8086,9 +8086,29 @@
       "unavailable-title": "Template metadata unavailable"
     },
     "time-picker": {
+      "dashboard-ranges-description": "Saved on this dashboard for everyone who opens it.",
+      "dashboard-ranges-empty": "This dashboard has no quick ranges of its own.",
+      "dashboard-ranges-label": "Dashboard ranges",
       "hide-time-picker": "Hide time picker",
       "now-delay-description": "Exclude recent data that may be incomplete.",
       "now-delay-label": "Now delay",
+      "personal-range-add": "Add to your ranges",
+      "personal-range-duplicate": "That range is already in your ranges.",
+      "personal-range-from": "From",
+      "personal-range-from-placeholder": "now-12h",
+      "personal-range-invalid": "Enter a name and a relative range, such as now-12h to now.",
+      "personal-range-limit": "You can save up to 20 ranges.",
+      "personal-range-name": "Range name",
+      "personal-range-name-placeholder": "Last 12 hours",
+      "personal-range-name-too-long": "Use a name of 120 characters or fewer.",
+      "personal-range-remove": "Remove {{display}} from your ranges",
+      "personal-range-remove-label": "Remove",
+      "personal-range-to": "To",
+      "personal-range-to-placeholder": "now",
+      "personal-ranges-description": "Saved in this browser for you. They are available the next time you open a dashboard, and they are not saved on the dashboard.",
+      "personal-ranges-empty": "You have not saved any ranges yet.",
+      "personal-ranges-label": "Your ranges",
+      "range-summary": "{{display}} ({{from}} to {{to}})",
       "refresh-live-dashboards-description": "Continuously update panels when the time range includes the current time",
       "refresh-live-dashboards-label": "Refresh live dashboards",
       "time-options-label": "Time options",
@@ -16970,12 +16990,23 @@
       "tooltip-copy": "Copy time range to clipboard",
       "tooltip-paste": "Paste time range"
     },
+    "dashboard": {
+      "title": "Dashboard ranges"
+    },
     "footer": {
       "change-settings-button": "Change time settings",
       "fiscal-year-option": "Fiscal year",
       "fiscal-year-start": "Fiscal year start month",
       "time-zone-option": "Time zone",
       "time-zone-selection": "Time zone selection"
+    },
+    "personal": {
+      "remove": "Remove {{display}} from your ranges",
+      "save": "Save to your ranges",
+      "title": "Your ranges"
+    },
+    "quick": {
+      "title": "Quick ranges"
     },
     "range-content": {
       "apply-button": "Apply time range",
