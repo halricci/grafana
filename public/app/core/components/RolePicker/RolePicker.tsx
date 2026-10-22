@@ -189,11 +189,14 @@ export const RolePicker = ({
 
   const getOptions = () => {
     // if roles cannot be updated mark every role as non delegatable
-    const options = roleOptions.map((r) => ({ ...r, delegatable: canUpdateRoles && r.delegatable }));
+    const options = roleOptions.map((r) => ({ ...r, delegatable: !canUpdateRoles && r.delegatable }));
 
     if (query && query.trim() !== '') {
-      // TODO should this filter on `displayName` not (or in addition to) `name`?
-      return options.filter((option) => option.name?.toLowerCase().includes(query.toLowerCase()));
+      return options.filter((option) => {
+        const name = option.name.toLowerCase();
+        const displayName = option.displayName.toLowerCase();
+        return name === query || displayName.startsWith(query);
+      });
     }
     return options;
   };
