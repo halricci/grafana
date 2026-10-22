@@ -8089,6 +8089,19 @@
       "hide-time-picker": "Hide time picker",
       "now-delay-description": "Exclude recent data that may be incomplete.",
       "now-delay-label": "Now delay",
+      "personal-quick-ranges-add": "Add",
+      "personal-quick-ranges-description": "Saved in this browser and shown on every dashboard. Adding or removing one does not change this dashboard.",
+      "personal-quick-ranges-empty": "No saved ranges yet.",
+      "personal-quick-ranges-from": "From",
+      "personal-quick-ranges-from-placeholder": "now-45m",
+      "personal-quick-ranges-invalid": "Enter a relative range, like 45m or now-45m to now.",
+      "personal-quick-ranges-label": "Your quick ranges",
+      "personal-quick-ranges-name": "Name",
+      "personal-quick-ranges-name-placeholder": "Name",
+      "personal-quick-ranges-remove": "Remove {{display}}",
+      "personal-quick-ranges-to": "To",
+      "personal-quick-ranges-to-placeholder": "now",
+      "personal-quick-ranges-value": "{{display}} ({{from}} to {{to}})",
       "refresh-live-dashboards-description": "Continuously update panels when the time range includes the current time",
       "refresh-live-dashboards-label": "Refresh live dashboards",
       "time-options-label": "Time options",
@@ -16977,6 +16990,19 @@
       "time-zone-option": "Time zone",
       "time-zone-selection": "Time zone selection"
     },
+    "personal": {
+      "empty": "No saved ranges yet.",
+      "remove": "Remove {{display}}",
+      "save": "Save range",
+      "save-disabled": "Save range. Only relative ranges can be saved.",
+      "save-label": "Save {{display}} to your ranges",
+      "saved": "Saved",
+      "saved-label": "Saved to your ranges",
+      "title": "Your ranges"
+    },
+    "quick": {
+      "dashboard-title": "Dashboard"
+    },
     "range-content": {
       "apply-button": "Apply time range",
       "default-error": "Enter a date ({{dateExample}}) or relative time ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -16993,6 +17019,10 @@
       "to": "to",
       "zoom-out-button": "Zoom out time range",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
+    },
+    "scene": {
+      "move-backward": "Move {{duration}} backward",
+      "move-forward": "Move {{duration}} forward"
     },
     "time-range": {
       "apply": "Apply time range",

@@ -22,6 +22,7 @@ import {
   SceneVariableSet,
 } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { SceneTimePickerWithPersonalRanges } from 'app/core/components/TimePicker/SceneTimePickerWithPersonalRanges';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
@@ -256,7 +257,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
         {!hideTimeControls && (
           <div className={styles.fixedControls}>
-            <timePicker.Component model={timePicker} />
+            <SceneTimePickerWithPersonalRanges model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
