@@ -15,34 +15,40 @@ interface Props {
   options: TimeOption[];
   value?: TimeOption;
   onChange: (option: TimeOption) => void;
+  onRemove?: (option: TimeOption) => void;
   placeholderEmpty?: ReactNode;
+  /** Shown under the title when the list has no options. Does not replace the title. */
+  emptyMessage?: ReactNode;
+  headerAction?: ReactNode;
+  testId?: string;
 }
 
 export const TimeRangeList = (props: Props) => {
   const styles = useStyles2(getStyles);
-  const { title, options, placeholderEmpty } = props;
+  const { title, options, placeholderEmpty, emptyMessage, headerAction, testId } = props;
 
   if (typeof placeholderEmpty !== 'undefined' && options.length <= 0) {
     return <>{placeholderEmpty}</>;
   }
 
-  if (!title) {
+  if (!title && !headerAction) {
     return <Options {...props} />;
   }
 
   return (
-    <section aria-label={title}>
+    <section aria-label={title} data-testid={testId}>
       <fieldset>
         <div className={styles.title}>
-          <TimePickerTitle>{title}</TimePickerTitle>
+          {title ? <TimePickerTitle>{title}</TimePickerTitle> : <span />}
+          {headerAction}
         </div>
-        <Options {...props} />
+        {options.length === 0 ? emptyMessage : <Options {...props} />}
       </fieldset>
     </section>
   );
 };
 
-const Options = ({ options, value, onChange, title }: Props) => {
+const Options = ({ options, value, onChange, onRemove, title }: Props) => {
   const styles = useStyles2(getOptionsStyles);
 
   const localRef = useRef<HTMLUListElement>(null);
@@ -63,6 +69,7 @@ const Options = ({ options, value, onChange, title }: Props) => {
             value={option}
             selected={isEqual(option, value)}
             onSelect={onChange}
+            onRemove={onRemove}
             name={title ?? t('time-picker.time-range.default-title', 'Time ranges')}
           />
         ))}

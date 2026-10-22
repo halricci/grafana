@@ -3,7 +3,7 @@ import { autoUpdate, offset, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { memo, useCallback, useEffect, useRef, useState, type JSX } from 'react';
+import { memo, useCallback, useContext, useEffect, useRef, useState, type JSX } from 'react';
 import { useMedia } from 'react-use';
 
 import {
@@ -33,6 +33,13 @@ import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
 import { getTimeZoneDisplayInfo } from './TimeZonePicker/timeZoneUtils';
 import { type WeekStart } from './WeekStartPicker';
 import { getQuickOptions } from './options';
+import {
+  QuickRangesSourceContext,
+  savePersonalQuickRange,
+  timeRangeToPersonalQuickRange,
+  usePersonalQuickRanges,
+  removePersonalQuickRange,
+} from './personalQuickRanges';
 import { useTimeSync } from './utils/useTimeSync';
 
 /** @public */
@@ -71,6 +78,8 @@ export interface TimeRangePickerProps {
   history?: TimeRange[];
   quickRanges?: TimeOption[];
   hideQuickRanges?: boolean;
+  /** Hides the browser-saved "Your ranges" section. Dashboard ranges are unchanged. */
+  hidePersonalQuickRanges?: boolean;
   widthOverride?: number;
   isOnCanvas?: boolean;
   onToolbarTimePickerClick?: () => void;
@@ -100,6 +109,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onChangeFiscalYearStartMonth,
     quickRanges,
     hideQuickRanges,
+    hidePersonalQuickRanges,
     widthOverride,
     isOnCanvas,
     onToolbarTimePickerClick,
@@ -179,6 +189,8 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   );
   const { dialogProps } = useDialog({}, overlayRef);
 
+  const personalQuickRanges = usePersonalQuickRanges();
+  const quickRangesKind = useContext(QuickRangesSourceContext);
   const styles = useStyles2(getStyles);
   const { modalBackdrop } = useStyles2(getModalStyles);
 
@@ -249,6 +261,21 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                   value={value}
                   onChange={onChange}
                   quickOptions={quickRanges || getQuickOptions()}
+                  quickRangesKind={quickRanges?.length && quickRangesKind === 'dashboard' ? 'dashboard' : 'builtin'}
+                  personalOptions={hidePersonalQuickRanges || hideQuickRanges ? undefined : personalQuickRanges}
+                  onSavePersonalRange={
+                    hidePersonalQuickRanges || hideQuickRanges
+                      ? undefined
+                      : () => {
+                          const option = timeRangeToPersonalQuickRange(value, timeZone);
+                          if (option) {
+                            savePersonalQuickRange(option);
+                          }
+                        }
+                  }
+                  onRemovePersonalOption={
+                    hidePersonalQuickRanges || hideQuickRanges ? undefined : removePersonalQuickRange
+                  }
                   history={history}
                   showHistory
                   widthOverride={widthOverride}

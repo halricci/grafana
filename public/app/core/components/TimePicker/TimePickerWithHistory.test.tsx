@@ -1,7 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getDefaultTimeRange, systemDateFormats } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { PERSONAL_QUICK_RANGES_STORAGE_KEY, QuickRangesSourceContext } from '@grafana/ui/internal';
 
 import { TimePickerWithHistory } from './TimePickerWithHistory';
 
@@ -138,6 +140,74 @@ describe('TimePickerWithHistory', () => {
     await userEvent.click(screen.getByLabelText(/Time range selected/));
 
     expect(screen.getByText(/2022-12-10 00:00:00 to 2022-12-10 23:59:59/i)).toBeInTheDocument();
+  });
+
+  it('saves and removes a personal range without touching recently used ranges', async () => {
+    const onChange = jest.fn();
+    const timeRange = getDefaultTimeRange();
+    render(<TimePickerWithHistory value={timeRange} {...props} onChange={onChange} />);
+    await userEvent.click(screen.getByLabelText(/Time range selected/));
+
+    await userEvent.click(screen.getByTestId(selectors.components.TimePicker.savePersonalRangeButton));
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(window.localStorage.getItem(LOCAL_STORAGE_KEY)).toBeNull();
+    expect(JSON.parse(window.localStorage.getItem(PERSONAL_QUICK_RANGES_STORAGE_KEY) ?? '[]')).toEqual([
+      { from: 'now-6h', to: 'now', display: 'Last 6 hours' },
+    ]);
+
+    const personal = screen.getByTestId(selectors.components.TimePicker.personalRanges);
+    expect(within(personal).getByText('Last 6 hours')).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.TimePicker.quickRanges)).toBeInTheDocument();
+
+    await clearAndType(getFromField(), '2022-12-03 00:00:00');
+    await clearAndType(getToField(), '2022-12-03 23:59:59');
+    await userEvent.click(getApplyButton());
+
+    expect(JSON.parse(window.localStorage.getItem(LOCAL_STORAGE_KEY) ?? '[]')).toEqual([
+      { from: '2022-12-03T00:00:00.000Z', to: '2022-12-03T23:59:59.000Z' },
+    ]);
+    expect(JSON.parse(window.localStorage.getItem(PERSONAL_QUICK_RANGES_STORAGE_KEY) ?? '[]')).toEqual([
+      { from: 'now-6h', to: 'now', display: 'Last 6 hours' },
+    ]);
+
+    await userEvent.click(screen.getByLabelText(/Time range selected/));
+    await userEvent.click(
+      within(screen.getByTestId(selectors.components.TimePicker.personalRanges)).getByRole('button', {
+        name: 'Remove Last 6 hours',
+      })
+    );
+
+    expect(JSON.parse(window.localStorage.getItem(PERSONAL_QUICK_RANGES_STORAGE_KEY) ?? '[]')).toEqual([]);
+    expect(screen.getByText(/2022-12-03 00:00:00 to 2022-12-03 23:59:59/i)).toBeInTheDocument();
+  });
+
+  it('labels dashboard ranges and leaves them in place when a personal range is saved', async () => {
+    const onChange = jest.fn();
+    const timeRange = getDefaultTimeRange();
+    render(
+      <QuickRangesSourceContext.Provider value="dashboard">
+        <TimePickerWithHistory
+          value={timeRange}
+          {...props}
+          onChange={onChange}
+          quickRanges={[{ from: 'now-1h', to: 'now', display: 'Business hours' }]}
+        />
+      </QuickRangesSourceContext.Provider>
+    );
+    await userEvent.click(screen.getByLabelText(/Time range selected/));
+
+    const dashboard = screen.getByTestId(selectors.components.TimePicker.dashboardRanges);
+    expect(within(dashboard).getByText('Business hours')).toBeInTheDocument();
+    expect(within(dashboard).queryByRole('button', { name: /remove/i })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByTestId(selectors.components.TimePicker.savePersonalRangeButton));
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(within(dashboard).getByText('Business hours')).toBeInTheDocument();
+    expect(JSON.parse(window.localStorage.getItem(PERSONAL_QUICK_RANGES_STORAGE_KEY) ?? '[]')).toEqual([
+      { from: 'now-6h', to: 'now', display: 'Last 6 hours' },
+    ]);
   });
 
   it('Should display history correctly with custom time format', async () => {
