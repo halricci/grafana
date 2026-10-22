@@ -64,7 +64,7 @@ export function createPersonalQuickRange(from: string, to: string, timeZone?: Ti
 
   const raw = { from: trimmedFrom, to: trimmedTo };
   const converted = rangeUtil.convertRawToRange(raw, timeZone);
-  if (!converted.from.isValid() || !converted.to.isValid() || converted.from.isAfter(converted.to)) {
+  if (!converted.from.isValid() || !converted.to.isValid() || converted.to.isBefore(converted.from)) {
     return { ok: false, error: 'order' };
   }
 
