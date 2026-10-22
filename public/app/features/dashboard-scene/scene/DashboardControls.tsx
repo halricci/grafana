@@ -32,6 +32,7 @@ import { KioskMode } from 'app/types/dashboard';
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { usePanelEditDirty } from '../panel-edit/usePanelEditDirty';
+import { DashboardPersonalTimeRanges } from '../timepicker/DashboardPersonalTimeRanges';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
@@ -256,7 +257,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
         {!hideTimeControls && (
           <div className={styles.fixedControls}>
-            <timePicker.Component model={timePicker} />
+            <DashboardPersonalTimeRanges timePicker={timePicker}>
+              <timePicker.Component model={timePicker} />
+            </DashboardPersonalTimeRanges>
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
