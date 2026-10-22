@@ -219,6 +219,18 @@ afterAll(() => {
 });
 
 describe('CorrelationsPage - Legacy', () => {
+  describe('With no data sources', () => {
+    beforeEach(async () => {
+      await renderWithContext({});
+    });
+
+    it('shows an empty state that links to add a data source', async () => {
+      const addDataSource = await screen.findByRole('link', { name: /add data source/i });
+      expect(addDataSource).toHaveAttribute('href', '/connections/datasources/new');
+      expect(screen.queryByRole('button', { name: /add correlation/i })).not.toBeInTheDocument();
+    });
+  });
+
   describe('With no correlations', () => {
     beforeEach(async () => {
       await renderWithContext({
