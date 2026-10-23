@@ -45,6 +45,35 @@ describe('TimePickerContent', () => {
       expect(await screen.findByText(/Last 5 minutes/i)).toBeInTheDocument();
     });
 
+    it('renders personal and dashboard ranges and handles save and remove actions', async () => {
+      const user = userEvent.setup();
+      const onSavePersonalRange = jest.fn();
+      const onRemovePersonalRange = jest.fn();
+      const personalRange = { from: 'now-3h', to: 'now', display: 'My three hours' };
+
+      renderComponent({
+        value: relativeValue,
+        quickOptionsTitle: 'Dashboard ranges',
+        personalOptions: [personalRange],
+        onSavePersonalRange,
+        onRemovePersonalRange,
+      });
+
+      expect(screen.getByText('Your ranges')).toBeInTheDocument();
+      expect(screen.getByText('Dashboard ranges')).toBeInTheDocument();
+      expect(screen.getByText('My three hours')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Remove My three hours' }));
+      expect(onRemovePersonalRange).toHaveBeenCalledWith(personalRange);
+
+      await user.click(screen.getByRole('button', { name: 'Save current range' }));
+      expect(onSavePersonalRange).toHaveBeenCalledWith({
+        from: 'now-5m',
+        to: 'now',
+        display: 'Last 5 minutes',
+      });
+    });
+
     it('renders without relative picker', async () => {
       renderComponent({ value: absoluteValue, hideQuickRanges: true });
       expect(await screen.findByText(/absolute time range/i)).toBeInTheDocument();
@@ -206,6 +235,7 @@ function renderComponent({
   history = [],
   hideQuickRanges = false,
   hideTimeZone = false,
+  ...rest
 }: Pick<PropsWithScreenSize, 'value'> & Partial<PropsWithScreenSize>): RenderResult {
   return render(
     <TimePickerContentWithScreenSize
@@ -222,6 +252,7 @@ function renderComponent({
       history={history}
       hideQuickRanges={hideQuickRanges}
       hideTimeZone={hideTimeZone}
+      {...rest}
     />
   );
 }

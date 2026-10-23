@@ -3,16 +3,17 @@ import { memo, useId } from 'react';
 
 import { type GrafanaTheme2, type TimeOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
+import { IconButton } from '../../IconButton/IconButton';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'flex',
       alignItems: 'center',
-      flexDirection: 'row-reverse',
       justifyContent: 'space-between',
       position: 'relative',
     }),
@@ -54,13 +55,14 @@ interface Props {
   value: TimeOption;
   selected?: boolean;
   onSelect: (option: TimeOption) => void;
+  onRemove?: (option: TimeOption) => void;
   /**
    *  Input identifier. This should be the same for all options in a group.
    */
   name: string;
 }
 
-export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false, name }) => {
+export const TimeRangeOption = memo<Props>(({ value, onSelect, onRemove, selected = false, name }) => {
   const styles = useStyles2(getStyles);
   // In case there are more of the same timerange in the list
   const id = useId();
@@ -83,6 +85,14 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
       <label className={cx(styles.label, selected && styles.labelSelected)} htmlFor={id}>
         {value.display}
       </label>
+      {onRemove && (
+        <IconButton
+          name="trash-alt"
+          aria-label={t('time-picker.time-range.remove', 'Remove {{range}}', { range: value.display })}
+          data-testid={selectors.components.TimePicker.removePersonalRange(value.from, value.to)}
+          onClick={() => onRemove(value)}
+        />
+      )}
     </li>
   );
 });
