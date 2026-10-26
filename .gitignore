@@ -77,7 +77,15 @@ public/css/*.min.css
 .zed/*
 !.zed/debug.json
 .vs/
-.cursor/
+# Track the Cursor 201 demo config. Ignore the rest of .cursor (local agent state).
+# A parent directory ignore is not negated by a child exception, so ignore the
+# contents and re-include the directories the demo commits.
+.cursor/*
+!.cursor/rules/
+!.cursor/skills/
+!.cursor/hooks/
+!.cursor/hooks.json
+!.cursor/agents/
 .devcontainer/
 .agents/
 .claude/*

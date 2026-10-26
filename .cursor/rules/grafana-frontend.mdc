@@ -1,0 +1,22 @@
+---
+globs: public/app/**/*.ts, public/app/**/*.tsx
+alwaysApply: false
+---
+
+# Grafana frontend
+
+Use function components and hooks. Match the folder you are in, under `public/app/features/<domain>/` or `public/app/plugins/`.
+
+## Styling
+
+Style components with Emotion through `useStyles2` from `@grafana/ui`. `getStyles` is a function of `GrafanaTheme2` from `@grafana/data`, and the objects use `css` from `@emotion/css`. Do not add a new CSS file or an inline style object for layout. The text panel is the canonical example: `useStyles2(getStyles)` and `getStyles` in `public/app/plugins/panel/text/v1/TextPanel.tsx`.
+
+## UI
+
+Import shared controls from `@grafana/ui` before writing a new control. Data types come from `@grafana/data`. Runtime services come from `@grafana/runtime`. For a new feature flag, read it the way the text panel does: `getFeatureFlagClient().getBooleanValue(FlagKeys.TextNewFeatures, false)` in `public/app/plugins/panel/text/v2/utils.ts`. Older call sites still read `config.featureToggles` (for example `public/app/core/services/context_srv.ts`). Match the file you are editing.
+
+## Tests
+
+Co-locate `*.test.ts` or `*.test.tsx`. Render with React Testing Library (`render` and `screen` from `@testing-library/react`) and assert what the user sees or what a callback received. Do not assert only that a component is defined. Examples: `public/app/plugins/panel/text/v1/TextPanel.test.tsx` and `public/app/plugins/panel/text/v2/editor/TextNGFeedbackButton.test.tsx`. Run once with `yarn jest --no-watch <path>`. The `yarn test` script stays in watch mode.
+
+For a panel, also follow `public/app/plugins/panel/AGENTS.md`.

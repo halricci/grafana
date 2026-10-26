@@ -1,0 +1,26 @@
+---
+globs: pkg/**/*.go
+alwaysApply: false
+---
+
+# Grafana Go backend
+
+Follow the package you are editing. Business logic lives in `pkg/services/<domain>/`. HTTP handlers in `pkg/api/` call a service. They do not grow their own business logic. Routes are registered in `registerRoutes` in `pkg/api/api.go`.
+
+## Errors
+
+Wrap a returned error with `fmt.Errorf("what failed: %w", err)` so callers can use `errors.Is` and `errors.As`. Do not format an error you are returning with `%v` or `%s`. `%w` is only valid for an `error` value, not for a string.
+
+The codebase already does this in `pkg/services/sqlstore/migrations/ualert/ualert.go` (`fmt.Errorf("failed to get annotations for all alert rules: %w", err)`).
+
+## Logging
+
+Use `github.com/grafana/grafana/pkg/infra/log`. Create a logger with `log.New("area.name")`, as documented on `New` in `pkg/infra/log/log.go`. Log a message plus key/value pairs, for example `logger.Error("failed to start rendering service", "err", err)` in `pkg/services/rendering/rendering.go`. When you already hold a logger, add request context with `logger.FromContext(ctx)`. Do not use `fmt.Println` or the standard library log package inside a service.
+
+## Dependencies
+
+Constructors take interfaces defined in the same package. Wire builds the graph from provider sets. Injectors live in `pkg/server/wire.go` and `pkg/server/bootstrap/wire/inject.go`. Generated output is `pkg/server/wire_gen.go` and `pkg/server/bootstrap/wire/wire_gen.go`. After a constructor or a provider set changes, run `make gen-go`. Do not hand-edit a `wire_gen.go` file.
+
+## Tests
+
+Put tests in a `_test.go` file next to the code. Use `testing` and `github.com/stretchr/testify/require` for a check that should stop the test. See `pkg/services/featuremgmt/manager_test.go` and `pkg/tsdb/grafana-testdata-datasource/usa_stats_test.go`. Run one test with `go test -count=1 -run TestName ./pkg/path/`.
