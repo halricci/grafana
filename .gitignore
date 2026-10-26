@@ -77,7 +77,6 @@ public/css/*.min.css
 .zed/*
 !.zed/debug.json
 .vs/
-.cursor/
 .devcontainer/
 .agents/
 .claude/*
