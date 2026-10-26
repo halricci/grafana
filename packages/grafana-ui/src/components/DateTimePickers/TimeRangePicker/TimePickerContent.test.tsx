@@ -1,7 +1,8 @@
-import { render, type RenderResult, screen } from '@testing-library/react';
+import { render, type RenderResult, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime, type TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { type PropsWithScreenSize, TimePickerContentWithScreenSize } from './TimePickerContent';
 
@@ -43,6 +44,39 @@ describe('TimePickerContent', () => {
     it('renders with relative picker', async () => {
       renderComponent({ value: absoluteValue });
       expect(await screen.findByText(/Last 5 minutes/i)).toBeInTheDocument();
+    });
+
+    it('labels personal ranges separately from dashboard ranges', async () => {
+      const user = userEvent.setup();
+      const onChange = jest.fn();
+      const onSave = jest.fn();
+      const onRemove = jest.fn();
+      renderComponent({
+        value: relativeValue,
+        onChange,
+        personalOptions: [{ from: 'now-2h', to: 'now', display: 'My deploy window' }],
+        onSavePersonalRange: onSave,
+        onRemovePersonalOption: onRemove,
+        quickRangesKind: 'dashboard',
+        history: [createAbsoluteTimeRange('2019-12-17T07:48:27.433Z', '2019-12-17T07:49:27.433Z')],
+      });
+
+      const personal = screen.getByTestId(selectors.components.TimePicker.personalRanges);
+      const dashboard = screen.getByTestId(selectors.components.TimePicker.dashboardRanges);
+      expect(within(personal).getByText('My deploy window')).toBeInTheDocument();
+      expect(within(personal).getByRole('button', { name: 'Save range' })).toBeInTheDocument();
+      expect(within(dashboard).getByText('Last 5 minutes')).toBeInTheDocument();
+      expect(within(dashboard).queryByRole('button', { name: /remove/i })).not.toBeInTheDocument();
+      expect(screen.getByText(/recently used absolute ranges/i)).toBeInTheDocument();
+      expect(screen.getByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
+
+      await user.click(within(personal).getByRole('button', { name: 'Save range' }));
+      expect(onSave).toHaveBeenCalledTimes(1);
+      expect(onChange).not.toHaveBeenCalled();
+
+      await user.click(within(personal).getByRole('button', { name: 'Remove My deploy window' }));
+      expect(onRemove).toHaveBeenCalledWith({ from: 'now-2h', to: 'now', display: 'My deploy window' });
+      expect(onChange).not.toHaveBeenCalled();
     });
 
     it('renders without relative picker', async () => {
@@ -206,11 +240,16 @@ function renderComponent({
   history = [],
   hideQuickRanges = false,
   hideTimeZone = false,
+  onChange = noop,
+  personalOptions,
+  onRemovePersonalOption,
+  onSavePersonalRange,
+  quickRangesKind,
 }: Pick<PropsWithScreenSize, 'value'> & Partial<PropsWithScreenSize>): RenderResult {
   return render(
     <TimePickerContentWithScreenSize
       onChangeTimeZone={noop}
-      onChange={noop}
+      onChange={onChange}
       quickOptions={[
         { from: 'now-5m', to: 'now', display: 'Last 5 minutes' },
         { from: 'now-15m', to: 'now', display: 'Last 15 minutes' },
@@ -222,6 +261,10 @@ function renderComponent({
       history={history}
       hideQuickRanges={hideQuickRanges}
       hideTimeZone={hideTimeZone}
+      personalOptions={personalOptions}
+      onRemovePersonalOption={onRemovePersonalOption}
+      onSavePersonalRange={onSavePersonalRange}
+      quickRangesKind={quickRangesKind}
     />
   );
 }
