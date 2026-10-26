@@ -3,6 +3,7 @@ package testdatasource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
@@ -102,4 +103,31 @@ func TestUSAScenario(t *testing.T) {
 			require.LessOrEqual(t, frame.Rows(), maxAllowed)
 		}
 	})
+}
+
+func TestUSAScenario_PeriodErrorUnwraps(t *testing.T) {
+	svc := &Service{}
+	raw, err := json.Marshal(usaQueryWrapper{USA: usaQuery{
+		Mode:   modeTimeseries,
+		Period: "not-a-duration",
+		Fields: []string{"foo"},
+		States: []string{"CA"},
+	}})
+	require.NoError(t, err)
+
+	_, err = svc.handleUSAScenario(context.Background(), &backend.QueryDataRequest{
+		Queries: []backend.DataQuery{{
+			RefID: "A",
+			TimeRange: backend.TimeRange{
+				From: time.Date(2020, time.January, 10, 0, 0, 0, 0, time.UTC),
+				To:   time.Date(2020, time.January, 10, 1, 0, 0, 0, time.UTC),
+			},
+			JSON: raw,
+		}},
+	})
+	require.Error(t, err)
+	require.ErrorContains(t, err, "failed to parse query json")
+	require.ErrorContains(t, err, "invalid duration")
+	// %w keeps the parse error on the chain. %v formats it into the string and unwraps to nil.
+	require.NotNil(t, errors.Unwrap(err))
 }

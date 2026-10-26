@@ -47,7 +47,7 @@ func (s *Service) handleUSAScenario(ctx context.Context, req *backend.QueryDataR
 		wrapper := &usaQueryWrapper{}
 		err := json.Unmarshal(q.JSON, wrapper)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse query json: %v", err)
+			return nil, fmt.Errorf("failed to parse query json: %w", err)
 		}
 
 		usa := wrapper.USA
@@ -57,7 +57,7 @@ func (s *Service) handleUSAScenario(ctx context.Context, req *backend.QueryDataR
 		}
 		period, err := time.ParseDuration(periodString)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse query json: %v", err)
+			return nil, fmt.Errorf("failed to parse query json: %w", err)
 		}
 
 		if len(usa.Fields) == 0 {
