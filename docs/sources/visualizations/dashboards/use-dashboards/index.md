@@ -286,7 +286,16 @@ Click the current time range to change it. You can change the current time using
 
 #### Relative time range
 
-Select the relative time range from the **Relative time ranges** list. You can filter the list using the input field at the top. Some examples of time ranges include:
+Select a quick range from **Your ranges** or **Dashboard ranges**. You can filter either list with the search field at the top.
+
+- **Your ranges:** Ranges you save in this browser. They appear the next time you open a dashboard in this browser. Saving or removing one does not change the dashboard.
+- **Dashboard ranges:** Ranges that come with the dashboard. When a dashboard does not define its own quick ranges, this list shows the Grafana defaults.
+
+To save the current relative range, select **Save current range**. To copy a dashboard range into your ranges without applying it, select the bookmark beside that range. To remove a personal range, select the remove button beside it. You can also add and remove your ranges in dashboard settings, under **Time options**.
+
+Recently used absolute ranges stay separate from your quick ranges.
+
+Some examples of time ranges include:
 
 - Last 30 minutes
 - Last 12 hours
