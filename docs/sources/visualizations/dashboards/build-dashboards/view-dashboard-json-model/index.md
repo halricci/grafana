@@ -293,7 +293,7 @@ Usage of the fields is explained below:
 | **now**               |                                                           |
 | **hidden**            | whether timepicker is hidden or not                       |
 | **nowDelay**          | override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.                                                   |
-| **quick_ranges**      | custom quick ranges                                       |
+| **quick_ranges**      | Custom quick ranges for this dashboard. The time picker lists them under **Dashboard**. Ranges a viewer saves for themselves stay in the browser and are not stored in this field. |
 | **refresh_intervals** | interval options available in the refresh picker dropdown |
 | **status**            |                                                           |
 | **type**              |                                                           |

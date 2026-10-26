@@ -3241,7 +3241,7 @@ Set the default start of the week, valid values are: `saturday`, `sunday`, `mond
 
 ### `[time_picker]`
 
-This section controls system-wide defaults for the time picker, such as the default quick ranges.
+This section controls system-wide defaults for the time picker, such as the default quick ranges. A viewer can also save personal quick ranges from the time picker or from dashboard time settings. Personal ranges stay in that browser and are not written to a dashboard or to this configuration.
 
 #### `quick_ranges`
 
