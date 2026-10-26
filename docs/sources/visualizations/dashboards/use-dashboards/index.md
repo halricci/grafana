@@ -301,6 +301,14 @@ Select the relative time range from the **Relative time ranges** list. You can f
 
 You can enter a custom relative time range into the search at the top to quickly select, such as `13h` to select a time range for the last 13 hours.
 
+The time picker keeps three relative lists separate:
+
+- **Your ranges** are saved in this browser for you. They are available the next time you open a dashboard. Saving or removing one does not change the dashboard.
+- **Dashboard ranges** are the quick ranges an author attached to this dashboard. Everyone who opens the dashboard sees the same list.
+- **Quick ranges** are the built-in ranges, or the ranges configured for the Grafana server. When a dashboard defines its own ranges, those replace this list.
+
+When the current range is relative, select **Save to your ranges** to add it. You can also add and remove your ranges from dashboard settings, under **Time options**.
+
 #### Absolute time range
 
 You can set an absolute time range in the following ways:

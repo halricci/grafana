@@ -15,14 +15,18 @@ interface Props {
   options: TimeOption[];
   value?: TimeOption;
   onChange: (option: TimeOption) => void;
+  onRemove?: (option: TimeOption) => void;
   placeholderEmpty?: ReactNode;
+  /** Shown in the title row. Used for "save to your ranges" without adding a second heading. */
+  actions?: ReactNode;
+  testId?: string;
 }
 
 export const TimeRangeList = (props: Props) => {
   const styles = useStyles2(getStyles);
-  const { title, options, placeholderEmpty } = props;
+  const { title, options, placeholderEmpty, actions, testId } = props;
 
-  if (typeof placeholderEmpty !== 'undefined' && options.length <= 0) {
+  if (typeof placeholderEmpty !== 'undefined' && options.length <= 0 && !actions) {
     return <>{placeholderEmpty}</>;
   }
 
@@ -31,18 +35,19 @@ export const TimeRangeList = (props: Props) => {
   }
 
   return (
-    <section aria-label={title}>
+    <section aria-label={title} data-testid={testId}>
       <fieldset>
         <div className={styles.title}>
           <TimePickerTitle>{title}</TimePickerTitle>
+          {actions}
         </div>
-        <Options {...props} />
+        {options.length > 0 && <Options {...props} />}
       </fieldset>
     </section>
   );
 };
 
-const Options = ({ options, value, onChange, title }: Props) => {
+const Options = ({ options, value, onChange, onRemove, title }: Props) => {
   const styles = useStyles2(getOptionsStyles);
 
   const localRef = useRef<HTMLUListElement>(null);
@@ -63,6 +68,7 @@ const Options = ({ options, value, onChange, title }: Props) => {
             value={option}
             selected={isEqual(option, value)}
             onSelect={onChange}
+            onRemove={onRemove}
             name={title ?? t('time-picker.time-range.default-title', 'Time ranges')}
           />
         ))}
