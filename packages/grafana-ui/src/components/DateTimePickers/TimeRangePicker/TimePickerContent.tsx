@@ -16,6 +16,7 @@ import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
+import { Button } from '../../Button/Button';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
 import { TextLink } from '../../Link/TextLink';
@@ -36,6 +37,10 @@ interface Props {
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
   quickOptions?: TimeOption[];
+  quickOptionsTitle?: string;
+  personalOptions?: TimeOption[];
+  onSavePersonalRange?: (option: TimeOption) => void;
+  onRemovePersonalRange?: (option: TimeOption) => void;
   history?: TimeRange[];
   showHistory?: boolean;
   className?: string;
@@ -58,6 +63,10 @@ interface FormProps extends Omit<Props, 'history'> {
 export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   const {
     quickOptions = [],
+    quickOptionsTitle,
+    personalOptions = [],
+    onSavePersonalRange,
+    onRemovePersonalRange,
     isReversed,
     isFullscreen,
     hideQuickRanges,
@@ -77,25 +86,36 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
     (isFullscreen && showHistory) || (!isFullscreen && ((showHistory && !isHistoryEmpty) || !hideQuickRanges));
   const styles = useStyles2(getStyles, isReversed, hideQuickRanges, isContainerTall, isFullscreen);
   const historyOptions = mapToHistoryOptions(history, timeZone);
-  const baseTimeOption = useTimeOption(value.raw, quickOptions);
+  const allOptions = useMemo(() => [...personalOptions, ...quickOptions], [personalOptions, quickOptions]);
+  const baseTimeOption = useTimeOption(value.raw, allOptions);
   const [searchTerm, setSearchQuery] = useState('');
 
-  const { filteredQuickOptions, customTimeOption } = useMemo(() => {
+  const { filteredQuickOptions, filteredPersonalOptions, customTimeOption } = useMemo(() => {
     const filtered = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredPersonalOptions = personalOptions.filter((o) =>
+      o.display.toLowerCase().includes(searchTerm.toLowerCase())
+    );
     const customTimeOption = isValidGrafanaDuration(searchTerm) && rangeUtil.describeTextRange(searchTerm);
 
     if (customTimeOption) {
       const alreadyExists = filtered.some((o) => o.from === customTimeOption.from && o.to === customTimeOption.to);
 
       if (!alreadyExists) {
-        return { filteredQuickOptions: [customTimeOption, ...filtered], customTimeOption };
+        return { filteredQuickOptions: [customTimeOption, ...filtered], filteredPersonalOptions, customTimeOption };
       }
     }
 
-    return { filteredQuickOptions: filtered, customTimeOption: undefined };
-  }, [searchTerm, quickOptions]);
+    return { filteredQuickOptions: filtered, filteredPersonalOptions, customTimeOption: undefined };
+  }, [searchTerm, quickOptions, personalOptions]);
 
   const timeOption = customTimeOption || baseTimeOption;
+  const currentPersonalOption = useMemo(
+    () => toPersonalTimeOption(value, timeZone, allOptions),
+    [value, timeZone, allOptions]
+  );
+  const isCurrentRangeSaved = personalOptions.some(
+    (option) => option.from === currentPersonalOption.from && option.to === currentPersonalOption.to
+  );
 
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption));
@@ -117,8 +137,35 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
             </div>
             <div className={styles.scrollContent}>
               {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
+              {(personalOptions.length > 0 || onSavePersonalRange) && (
+                <TimeRangeList
+                  title={t('time-picker.personal-ranges.title', 'Your ranges')}
+                  options={filteredPersonalOptions}
+                  onChange={onChangeTimeOption}
+                  onRemove={onRemovePersonalRange}
+                  value={timeOption}
+                  headerAction={
+                    onSavePersonalRange && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={isCurrentRangeSaved}
+                        data-testid={selectors.components.TimePicker.savePersonalRange}
+                        onClick={() => onSavePersonalRange(currentPersonalOption)}
+                      >
+                        {t('time-picker.personal-ranges.save-current', 'Save current range')}
+                      </Button>
+                    )
+                  }
+                />
+              )}
               {!hideQuickRanges && (
-                <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
+                <TimeRangeList
+                  title={quickOptionsTitle}
+                  options={filteredQuickOptions}
+                  onChange={onChangeTimeOption}
+                  value={timeOption}
+                />
               )}
             </div>
           </div>
@@ -276,6 +323,17 @@ function mapToHistoryOptions(ranges?: TimeRange[], timeZone?: TimeZone): TimeOpt
   }
 
   return ranges.map((range) => mapRangeToTimeOption(range, timeZone));
+}
+
+function toPersonalTimeOption(value: TimeRange, timeZone: TimeZone | undefined, options: TimeOption[]): TimeOption {
+  const from = typeof value.raw.from === 'string' ? value.raw.from : value.raw.from.toISOString();
+  const to = typeof value.raw.to === 'string' ? value.raw.to : value.raw.to.toISOString();
+
+  return {
+    from,
+    to,
+    display: rangeUtil.describeTimeRange(value.raw, timeZone, options),
+  };
 }
 
 EmptyRecentList.displayName = 'EmptyRecentList';
