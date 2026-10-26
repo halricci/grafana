@@ -1,0 +1,14 @@
+---
+description: Use when adding or changing a Grafana backend constructor, a Wire provider set, or an injector under pkg/server. Covers make gen-go and the generated wire_gen.go files.
+alwaysApply: false
+---
+
+# Wire dependency injection
+
+Grafana builds its backend graph with Google Wire.
+
+- Provider sets and injectors live in `pkg/server/wire.go` and `pkg/server/bootstrap/wire/inject.go`. `wire.Build(...)` there is the injector. The `wireinject` build tag keeps those files out of the normal build.
+- `make gen-go` runs Wire and writes `pkg/server/wire_gen.go` and `pkg/server/bootstrap/wire/wire_gen.go`. The command is defined in the root `Makefile` (`gen-go`).
+- Do not hand-edit those generated files. Change the provider set or the constructor, then run `make gen-go`.
+- A new service constructor belongs next to the service, in `pkg/services/<domain>/`, and takes interfaces from that package. Register it in the existing provider set instead of constructing it inside an HTTP handler.
+- Wire fails the generation when the graph has a missing provider or a cycle. Fix the provider set. Do not stub the generated file to make it compile.

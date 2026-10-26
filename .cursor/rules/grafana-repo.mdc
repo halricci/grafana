@@ -1,0 +1,13 @@
+---
+alwaysApply: true
+---
+
+# Grafana repo guardrails
+
+This is the Grafana monorepo. Go backend code lives under `pkg/`. The React app lives under `public/app/`. Shared libraries live under `packages/`.
+
+- Do not commit secrets, tokens, or customer data.
+- Do not hand-edit generated or vendored files. That includes `wire_gen.go`, `*_gen.go`, `*.gen.ts`, `zz_generated*.go`, and anything under `vendor/`, `node_modules/`, or `public/build/`. Regenerate with the make target named in the file header (`make gen-go`, `make gen-cue`, `make gen-feature-toggles`).
+- Keep one change on one side (backend or frontend) unless the task truly needs both. The two sides ship on different cadences.
+- Match the surrounding code. Do not introduce a new pattern when the folder already has one.
+- Treat cross-site scripting, SQL injection, and command injection as defects. Sanitize panel HTML the way `textUtil.sanitizeTextPanelContent` does in `public/app/plugins/panel/text/v1/TextPanel.tsx`, and pass query arguments through the existing store helpers.

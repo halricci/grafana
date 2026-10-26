@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "command": ".cursor/hooks/format-edited.sh",
+        "timeout": 20
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": ".cursor/hooks/block-generated.sh",
+        "matcher": "Write|StrReplace|Delete|Edit",
+        "timeout": 5
+      }
+    ]
+  }
+}
