@@ -125,5 +125,5 @@ HD-2 and HD-4 have their own prompts in that file. HD-4 is the one that can take
 ## Uncertainties
 
 - Cloud agents load `.cursor/hooks.json` once the environment is writable. They do not run hooks on an early read-only turn. `sessionStart` does not run in cloud agents. Prompt hooks do not run there. User-level `~/.cursor/hooks.json` does not run there.
-- Whether a `beforeShellExecution` deny of `git push` also stops the pull-request action is a separate experiment. It is not configured on this branch. The result is in the demo pull request.
+- A `beforeShellExecution` hook that denies `git push` does stop a cloud agent that starts with that hook already in the repo. The shell command never runs. That hook is not on this branch. The denial text and the hook input are in the demo pull request. Opening a pull request was not blocked by the hook in that test: the hooked agent has no pull-request tool, and `gh pr create` failed with `Resource not accessible by integration` before a hook was involved. This session opened its pull requests with a separate tool, and that path was not run under the push hook.
 - `make gen-cue` and `make gen-feature-toggles` rewrite files outside a single feature. The skills name those commands. A live demo can stop before running them.
