@@ -70,6 +70,11 @@ export interface TimeRangePickerProps {
   onError?: (error?: string) => void;
   history?: TimeRange[];
   quickRanges?: TimeOption[];
+  /** True when `quickRanges` were saved on the dashboard. Built-in ranges stay unlabeled. */
+  quickRangesFromDashboard?: boolean;
+  personalQuickRanges?: TimeOption[];
+  onSavePersonalQuickRange?: (option: TimeOption) => void;
+  onRemovePersonalQuickRange?: (option: TimeOption) => void;
   hideQuickRanges?: boolean;
   widthOverride?: number;
   isOnCanvas?: boolean;
@@ -99,6 +104,10 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
     quickRanges,
+    quickRangesFromDashboard,
+    personalQuickRanges,
+    onSavePersonalQuickRange,
+    onRemovePersonalQuickRange,
     hideQuickRanges,
     widthOverride,
     isOnCanvas,
@@ -249,6 +258,10 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                   value={value}
                   onChange={onChange}
                   quickOptions={quickRanges || getQuickOptions()}
+                  quickRangesFromDashboard={quickRangesFromDashboard}
+                  personalQuickRanges={personalQuickRanges}
+                  onSavePersonalQuickRange={onSavePersonalQuickRange}
+                  onRemovePersonalQuickRange={onRemovePersonalQuickRange}
                   history={history}
                   showHistory
                   widthOverride={widthOverride}

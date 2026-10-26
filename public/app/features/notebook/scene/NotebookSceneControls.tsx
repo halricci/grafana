@@ -4,6 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
+import { SceneTimePickerWithPersonalRanges } from 'app/core/components/TimePicker/SceneTimePickerWithPersonalRanges';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { KioskMode } from 'app/types/dashboard';
 
@@ -63,7 +64,7 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
       )}
       {!hideTimeControls && (
         <>
-          <timePicker.Component model={timePicker} />
+          <SceneTimePickerWithPersonalRanges model={timePicker} />
           <refreshPicker.Component model={refreshPicker} />
         </>
       )}

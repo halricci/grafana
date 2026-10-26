@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { memo, useMemo, useState } from 'react';
 
 import {
+  dateMath,
   type GrafanaTheme2,
   isDateTime,
   isValidGrafanaDuration,
@@ -16,6 +17,7 @@ import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
+import { Button } from '../../Button/Button';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
 import { TextLink } from '../../Link/TextLink';
@@ -36,6 +38,11 @@ interface Props {
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
   quickOptions?: TimeOption[];
+  /** Quick options were saved on the dashboard. Built-in ranges stay unlabeled. */
+  quickRangesFromDashboard?: boolean;
+  personalQuickRanges?: TimeOption[];
+  onSavePersonalQuickRange?: (option: TimeOption) => void;
+  onRemovePersonalQuickRange?: (option: TimeOption) => void;
   history?: TimeRange[];
   showHistory?: boolean;
   className?: string;
@@ -58,6 +65,10 @@ interface FormProps extends Omit<Props, 'history'> {
 export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   const {
     quickOptions = [],
+    quickRangesFromDashboard,
+    personalQuickRanges,
+    onSavePersonalQuickRange,
+    onRemovePersonalQuickRange,
     isReversed,
     isFullscreen,
     hideQuickRanges,
@@ -77,23 +88,32 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
     (isFullscreen && showHistory) || (!isFullscreen && ((showHistory && !isHistoryEmpty) || !hideQuickRanges));
   const styles = useStyles2(getStyles, isReversed, hideQuickRanges, isContainerTall, isFullscreen);
   const historyOptions = mapToHistoryOptions(history, timeZone);
-  const baseTimeOption = useTimeOption(value.raw, quickOptions);
+  const baseTimeOption = useTimeOption(value.raw, [...(personalQuickRanges ?? []), ...quickOptions]);
   const [searchTerm, setSearchQuery] = useState('');
 
-  const { filteredQuickOptions, customTimeOption } = useMemo(() => {
-    const filtered = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
+  const { filteredQuickOptions, filteredPersonalOptions, customTimeOption } = useMemo(() => {
+    const matches = (option: TimeOption) => option.display.toLowerCase().includes(searchTerm.toLowerCase());
+    const filtered = quickOptions.filter(matches);
+    const filteredPersonal = (personalQuickRanges ?? []).filter(matches);
     const customTimeOption = isValidGrafanaDuration(searchTerm) && rangeUtil.describeTextRange(searchTerm);
 
     if (customTimeOption) {
       const alreadyExists = filtered.some((o) => o.from === customTimeOption.from && o.to === customTimeOption.to);
 
       if (!alreadyExists) {
-        return { filteredQuickOptions: [customTimeOption, ...filtered], customTimeOption };
+        return {
+          filteredQuickOptions: [customTimeOption, ...filtered],
+          filteredPersonalOptions: filteredPersonal,
+          customTimeOption,
+        };
       }
     }
 
-    return { filteredQuickOptions: filtered, customTimeOption: undefined };
-  }, [searchTerm, quickOptions]);
+    return { filteredQuickOptions: filtered, filteredPersonalOptions: filteredPersonal, customTimeOption: undefined };
+  }, [searchTerm, quickOptions, personalQuickRanges]);
+
+  const rangeToSave = customTimeOption || relativeQuickRange(value);
+  const alreadySaved = isSavedRange(rangeToSave, personalQuickRanges);
 
   const timeOption = customTimeOption || baseTimeOption;
 
@@ -118,7 +138,31 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
             <div className={styles.scrollContent}>
               {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
               {!hideQuickRanges && (
-                <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
+                <>
+                  {onSavePersonalQuickRange && (
+                    <PersonalQuickRanges
+                      options={filteredPersonalOptions}
+                      hasSavedRanges={Boolean(personalQuickRanges?.length)}
+                      value={timeOption}
+                      rangeToSave={rangeToSave}
+                      alreadySaved={alreadySaved}
+                      onSelect={onChangeTimeOption}
+                      onSave={onSavePersonalQuickRange}
+                      onRemove={onRemovePersonalQuickRange}
+                    />
+                  )}
+                  <TimeRangeList
+                    title={
+                      quickRangesFromDashboard && filteredQuickOptions.length > 0
+                        ? t('time-picker.quick.dashboard-title', 'Dashboard')
+                        : undefined
+                    }
+                    testId={quickRangesFromDashboard ? selectors.components.TimePicker.dashboardQuickRanges : undefined}
+                    options={filteredQuickOptions}
+                    onChange={onChangeTimeOption}
+                    value={timeOption}
+                  />
+                </>
               )}
             </div>
           </div>
@@ -245,6 +289,94 @@ const FullScreenForm = (props: FormProps) => {
     </>
   );
 };
+
+interface PersonalQuickRangesProps {
+  options: TimeOption[];
+  hasSavedRanges: boolean;
+  value?: TimeOption;
+  rangeToSave?: TimeOption;
+  alreadySaved: boolean;
+  onSelect: (option: TimeOption) => void;
+  onSave: (option: TimeOption) => void;
+  onRemove?: (option: TimeOption) => void;
+}
+
+const PersonalQuickRanges = ({
+  options,
+  hasSavedRanges,
+  value,
+  rangeToSave,
+  alreadySaved,
+  onSelect,
+  onSave,
+  onRemove,
+}: PersonalQuickRangesProps) => {
+  const styles = useStyles2(getPersonalStyles);
+  const title = t('time-picker.personal.title', 'Your ranges');
+
+  return (
+    <section aria-label={title} data-testid={selectors.components.TimePicker.personalQuickRanges}>
+      <div className={styles.header}>
+        <TimePickerTitle>{title}</TimePickerTitle>
+        <Button
+          size="sm"
+          fill="text"
+          variant="secondary"
+          type="button"
+          disabled={!rangeToSave || alreadySaved}
+          aria-label={saveRangeLabel(rangeToSave, alreadySaved)}
+          data-testid={selectors.components.TimePicker.savePersonalQuickRange}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (rangeToSave) {
+              onSave(rangeToSave);
+            }
+          }}
+        >
+          {alreadySaved ? t('time-picker.personal.saved', 'Saved') : t('time-picker.personal.save', 'Save range')}
+        </Button>
+      </div>
+      {options.length > 0 ? (
+        <TimeRangeList options={options} onChange={onSelect} onRemove={onRemove} value={value} />
+      ) : (
+        !hasSavedRanges && <div className={styles.empty}>{t('time-picker.personal.empty', 'No saved ranges yet.')}</div>
+      )}
+    </section>
+  );
+};
+
+function saveRangeLabel(range: TimeOption | undefined, alreadySaved: boolean): string {
+  if (alreadySaved) {
+    return t('time-picker.personal.saved-label', 'Saved to your ranges');
+  }
+  if (range) {
+    return t('time-picker.personal.save-label', 'Save {{display}} to your ranges', { display: range.display });
+  }
+  return t('time-picker.personal.save-disabled', 'Save range. Only relative ranges can be saved.');
+}
+
+function isSavedRange(range: TimeOption | undefined, ranges?: TimeOption[]): boolean {
+  if (!range || !ranges) {
+    return false;
+  }
+  return ranges.some((option) => option.from === range.from && option.to === range.to);
+}
+
+function relativeQuickRange(value: TimeRange): TimeOption | undefined {
+  const { from, to } = value.raw;
+  if (typeof from !== 'string' || typeof to !== 'string' || !from.startsWith('now') || !to.startsWith('now')) {
+    return undefined;
+  }
+  if (!dateMath.parse(from, false)?.isValid() || !dateMath.parse(to, true)?.isValid()) {
+    return undefined;
+  }
+  const display = rangeUtil.describeTimeRange({ from, to });
+  if (!display) {
+    return undefined;
+  }
+  return { from, to, display };
+}
 
 const EmptyRecentList = memo(() => {
   const styles = useStyles2(getEmptyListStyles);
@@ -384,6 +516,21 @@ const getFullScreenStyles = (theme: GrafanaTheme2, hideQuickRanges?: boolean) =>
     flexDirection: 'column',
     justifyContent: 'flex-end',
     paddingTop: theme.spacing(1),
+  }),
+});
+
+const getPersonalStyles = (theme: GrafanaTheme2) => ({
+  header: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing(1),
+    padding: '8px 8px 0 9px',
+  }),
+  empty: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    padding: theme.spacing(0.5, 1, 1, 1.5),
   }),
 });
 
