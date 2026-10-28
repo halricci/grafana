@@ -2,6 +2,7 @@ import { render, screen } from 'test/test-utils';
 
 import { behaviors, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
+import { PERSONAL_QUICK_RANGES_STORAGE_KEY } from '@grafana/ui';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import * as utils from '../pages/utils';
@@ -29,6 +30,16 @@ describe('GeneralSettingsEditView', () => {
 
     it('should return the correct urlKey', () => {
       expect(settings.getUrlKey()).toBe('settings');
+    });
+
+    it('stores dashboard quick ranges on the time picker', () => {
+      localStorage.clear();
+      const range = { from: 'now-12h', to: 'now', display: 'Last 12 hours' };
+
+      settings.onQuickRangesChange([range]);
+
+      expect(dashboard.state.controls?.state.timePicker.state.quickRanges).toEqual([range]);
+      expect(localStorage.getItem(PERSONAL_QUICK_RANGES_STORAGE_KEY)).toBeNull();
     });
 
     it('should return the dashboard', () => {

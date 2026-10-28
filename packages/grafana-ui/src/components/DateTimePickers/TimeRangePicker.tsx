@@ -3,7 +3,7 @@ import { autoUpdate, offset, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { memo, useCallback, useEffect, useRef, useState, type JSX } from 'react';
+import { memo, useCallback, useContext, useEffect, useRef, useState, type JSX } from 'react';
 import { useMedia } from 'react-use';
 
 import {
@@ -28,6 +28,7 @@ import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
+import { PersonalQuickRangesContext } from './TimeRangePicker/personalQuickRanges';
 import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
 import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
 import { getTimeZoneDisplayInfo } from './TimeZonePicker/timeZoneUtils';
@@ -181,6 +182,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
   const styles = useStyles2(getStyles);
   const { modalBackdrop } = useStyles2(getModalStyles);
+  const personalQuickRanges = useContext(PersonalQuickRangesContext);
 
   const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
 
@@ -257,6 +259,10 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                   hideQuickRanges={hideQuickRanges}
                   onError={onError}
                   weekStart={weekStart}
+                  personalQuickRanges={personalQuickRanges?.ranges}
+                  onSavePersonalQuickRange={personalQuickRanges?.save}
+                  onRemovePersonalQuickRange={personalQuickRanges?.remove}
+                  quickRangesFromDashboard={personalQuickRanges?.quickRangesFromDashboard}
                 />
               </section>
             </FocusScope>
