@@ -64,7 +64,7 @@ export const TimeSeriesPanel = ({
   const { dataLinkPostProcessor } = useDataLinksContext();
 
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
-  // Annotation, exemplar, and outside-range plugins assume time runs on the horizontal axis.
+  // Annotation, exemplar, outside-range, and x-axis interaction plugins assume time runs on the horizontal axis.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
   const {
     frames,
@@ -115,7 +115,7 @@ export const TimeSeriesPanel = ({
     return undefined;
   }, [frames, id]);
 
-  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  const enableAnnotationCreation = !isVerticallyOriented && Boolean(canAddAnnotations && canAddAnnotations());
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
@@ -172,7 +172,7 @@ export const TimeSeriesPanel = ({
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
             )}
-            <XAxisInteractionAreaPlugin config={uplotConfig} queryZoom={onChangeTimeRange} />
+            {!isVerticallyOriented && <XAxisInteractionAreaPlugin config={uplotConfig} queryZoom={onChangeTimeRange} />}
             {options.tooltip.mode !== TooltipDisplayMode.None && (
               <TooltipPlugin2
                 config={uplotConfig}
