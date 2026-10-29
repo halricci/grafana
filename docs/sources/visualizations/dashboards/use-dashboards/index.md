@@ -308,7 +308,15 @@ You can set an absolute time range in the following ways:
 - Type values into the **From** and **To** fields. You can type exact time values or relative values, such as `now-24h`, and then click **Apply time range**.
 - Click in the **From** or **To** field. Grafana displays a calendar. Click the day or days you want to use as the current time range and then click **Apply time range**.
 
-This section also displays recently used absolute ranges.
+This section also displays recently used absolute ranges. Recently used ranges stay separate from ranges you save yourself.
+
+#### Your ranges
+
+**Your ranges** follow you from dashboard to dashboard. They're stored in this browser, and they're still there the next time you open a dashboard.
+
+The **Dashboard** list is the quick ranges attached to that dashboard. A dashboard author adds those ranges in the dashboard JSON model, under `timepicker.quick_ranges`. When a dashboard has none of its own, the time picker shows the standard quick ranges under **Quick ranges**.
+
+Open the time picker and select **Save** to keep the current range on your list. Select the remove button beside a saved range to delete it. You can also save and remove ranges in dashboard settings, under **Time options**. Saving or removing one of your ranges leaves the dashboard unchanged.
 
 #### Semi-relative time range
 

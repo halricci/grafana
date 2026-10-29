@@ -38,9 +38,10 @@ export function GeneralSettingsEditViewRenderer({ model }: SceneComponentProps<G
   const { title, description, tags, meta, editable } = dashboard.useState();
   const { showMoveModal, moveModalProps } = model.useState();
   const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
-  const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
+  const { timeZone, weekStart, value: currentTimeRange, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
   const { intervals } = model.getRefreshPicker().useState();
-  const { hideTimeControls } = model.getDashboardControls().useState();
+  const { hideTimeControls, timePicker } = model.getDashboardControls().useState();
+  const { quickRanges } = timePicker.useState();
   const { enabled: liveNow } = model.getLiveNowTimer().useState();
   const EDITABLE_OPTIONS = [
     {
@@ -189,6 +190,8 @@ export function GeneralSettingsEditViewRenderer({ model }: SceneComponentProps<G
           liveNow={liveNow}
           timezone={timeZone || ''}
           weekStart={weekStart}
+          currentTimeRange={currentTimeRange}
+          dashboardQuickRanges={quickRanges}
         />
 
         {/* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}

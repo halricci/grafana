@@ -21,6 +21,7 @@ import { AppNotificationSeverity } from 'app/types/appNotifications';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import { DashboardPersonalTimeRanges } from '../timepicker/DashboardPersonalTimeRanges';
 
 import { getDashboardScenePageStateManager, type LoadError } from './DashboardScenePageStateManager';
 
@@ -109,7 +110,9 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
         </Stack>
         {!hideTimeControls && (
           <Stack>
-            <timePicker.Component model={timePicker} />
+            <DashboardPersonalTimeRanges timePicker={timePicker}>
+              <timePicker.Component model={timePicker} />
+            </DashboardPersonalTimeRanges>
             <refreshPicker.Component model={refreshPicker} />
           </Stack>
         )}
