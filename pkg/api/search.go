@@ -20,6 +20,7 @@ import (
 // Responses:
 // 200: searchResponse
 // 401: unauthorisedError
+// 403: forbiddenError
 // 422: unprocessableEntityError
 // 500: internalServerError
 func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
@@ -36,8 +37,15 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	deleted := c.Query("deleted")
 	permission := dashboardaccess.PERMISSION_VIEW
 
+	// Trash search is admin-only. A signed-in non-admin must get 403: clients
+	// treat 401 as an expired session and log the user out. A request that
+	// never authenticated still gets 401. The message stays "Unauthorized"
+	// so clients that match on the body keep working.
 	if deleted == "true" && c.GetOrgRole() != org.RoleAdmin {
-		return response.Error(http.StatusUnauthorized, "Unauthorized", nil)
+		if !c.IsSignedIn {
+			return response.Error(http.StatusUnauthorized, "Unauthorized", nil)
+		}
+		return response.Error(http.StatusForbidden, "Unauthorized", nil)
 	}
 
 	if limit > 5000 {
