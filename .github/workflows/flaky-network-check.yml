@@ -1,0 +1,32 @@
+name: Flaky network check
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/flaky-network-check.yml
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  fetch-registry:
+    name: Fetch package registry
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download package index
+        shell: bash
+        run: |
+          set -euo pipefail
+          # GITHUB_RUN_ATTEMPT is 1 the first time this run executes and 2 after
+          # a rerun. Attempt 1 always dials an unroutable address and exits with
+          # a connect timeout. A rerun skips the dial and passes.
+          if [ "${GITHUB_RUN_ATTEMPT}" -gt 1 ]; then
+            echo "Package registry reachable on run attempt ${GITHUB_RUN_ATTEMPT}"
+            exit 0
+          fi
+          echo "GET https://192.0.2.1/"
+          curl --fail --show-error --connect-timeout 15 --max-time 20 --retry 0 https://192.0.2.1/
