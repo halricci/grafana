@@ -17068,6 +17068,12 @@
           "label-constant": "Constant",
           "label-style": "Negative Y"
         }
+      },
+      "name-orientation": "Orientation",
+      "orientation-options": {
+        "label-auto": "Auto",
+        "label-horizontal": "Horizontal",
+        "label-vertical": "Vertical"
       }
     },
     "insert-nulls-editor": {
