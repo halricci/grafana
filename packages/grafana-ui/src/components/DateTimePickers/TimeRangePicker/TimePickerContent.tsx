@@ -27,7 +27,7 @@ import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeContent } from './TimeRangeContent';
 import { TimeRangeList } from './TimeRangeList';
 import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
-import { optionFromTimeRange, usePersonalQuickRanges } from './personalQuickRanges';
+import { matchesTimeRange, optionFromTimeRange, usePersonalQuickRanges } from './personalQuickRanges';
 
 interface Props {
   value: TimeRange;
@@ -86,15 +86,15 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   const styles = useStyles2(getStyles, isReversed, hideQuickRanges, isContainerTall, isFullscreen);
   const { ranges: personalRanges, save: savePersonalRange, remove: removePersonalRange } = usePersonalQuickRanges();
   const historyOptions = mapToHistoryOptions(history, timeZone);
-  const baseTimeOption = useTimeOption(value.raw, [...personalRanges, ...quickOptions]);
+  const quickTimeOption = useTimeOption(value.raw, quickOptions);
+  const savedTimeOption = personalRanges.find((option) => matchesTimeRange(option, value.raw, timeZone));
+  const baseTimeOption = savedTimeOption ?? quickTimeOption;
   const [searchTerm, setSearchQuery] = useState('');
   const currentOption = useMemo(
     () => optionFromTimeRange(value, timeZone, quickOptions),
     [value, timeZone, quickOptions]
   );
-  const alreadySaved = personalRanges.some(
-    (option) => option.from === currentOption.from && option.to === currentOption.to
-  );
+  const alreadySaved = savedTimeOption !== undefined;
 
   const { filteredQuickOptions, filteredPersonalOptions, customTimeOption } = useMemo(() => {
     const matches = (option: TimeOption) => option.display.toLowerCase().includes(searchTerm.toLowerCase());

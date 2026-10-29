@@ -1,6 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { dateMath, isDateTime, rangeUtil, store, type TimeOption, type TimeRange, type TimeZone } from '@grafana/data';
+import {
+  dateMath,
+  type DateTime,
+  dateTimeParse,
+  isDateTime,
+  rangeUtil,
+  type RawTimeRange,
+  store,
+  type TimeOption,
+  type TimeRange,
+  type TimeZone,
+} from '@grafana/data';
 
 import { isValid } from '../utils';
 
@@ -93,6 +104,14 @@ export function optionFromTimeRange(value: TimeRange, timeZone?: TimeZone, quick
   };
 }
 
+export function matchesTimeRange(
+  option: Pick<TimeOption, 'from' | 'to'>,
+  raw: RawTimeRange,
+  timeZone?: TimeZone
+): boolean {
+  return isSameEndpoint(option.from, raw.from, false, timeZone) && isSameEndpoint(option.to, raw.to, true, timeZone);
+}
+
 export function usePersonalQuickRanges() {
   const [ranges, setRanges] = useState<TimeOption[]>(() => readPersonalQuickRanges());
 
@@ -149,6 +168,16 @@ function toStoredRange(range: TimeOption): TimeOption {
     from: range.from.trim(),
     to: range.to.trim(),
   };
+}
+
+// Absolute endpoints are compared as instants because stored text and applied DateTimes differ in format.
+function isSameEndpoint(option: string, value: DateTime | string, roundUp: boolean, timeZone?: TimeZone): boolean {
+  if (dateMath.isMathString(option) || dateMath.isMathString(value)) {
+    return option === value;
+  }
+  return (
+    dateTimeParse(option, { roundUp, timeZone }).valueOf() === dateTimeParse(value, { roundUp, timeZone }).valueOf()
+  );
 }
 
 function endpointToString(value: TimeRange['raw']['from']): string {
