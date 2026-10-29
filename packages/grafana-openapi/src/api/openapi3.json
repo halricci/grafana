@@ -22383,6 +22383,9 @@
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
           "422": {
             "$ref": "#/components/responses/unprocessableEntityError"
           },
