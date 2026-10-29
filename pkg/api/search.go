@@ -20,6 +20,7 @@ import (
 // Responses:
 // 200: searchResponse
 // 401: unauthorisedError
+// 403: forbiddenError
 // 422: unprocessableEntityError
 // 500: internalServerError
 func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
@@ -36,8 +37,9 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	deleted := c.Query("deleted")
 	permission := dashboardaccess.PERMISSION_VIEW
 
+	// A signed-in non-admin is authenticated. 401 makes clients drop the session.
 	if deleted == "true" && c.GetOrgRole() != org.RoleAdmin {
-		return response.Error(http.StatusUnauthorized, "Unauthorized", nil)
+		return response.Error(http.StatusForbidden, "Unauthorized", nil)
 	}
 
 	if limit > 5000 {
