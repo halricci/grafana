@@ -1,0 +1,66 @@
+name: Unblock CI
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/unblock-ci.yml
+
+permissions:
+  actions: write
+
+concurrency:
+  group: unblock-ci-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  cancel-queued:
+    name: Cancel runs waiting on missing runners
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Cancel queued workflow runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.head_ref }}
+          SELF: ${{ github.run_id }}
+        run: |
+          set -uo pipefail
+          # Grafana workflows request runner labels this fork does not have.
+          # They stay queued, and the automation test refuses with
+          # "CI not yet complete". Cancel those runs. Leave the flaky check,
+          # which already finished, alone.
+          empty=0
+          for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18; do
+            ids="$(
+              gh run list --repo "$REPO" --branch "$BRANCH" --limit 100 \
+                --json databaseId,status,workflowName |
+                jq -r --argjson self "$SELF" '
+                  .[]
+                  | select(.status == "queued" or .status == "waiting" or .status == "pending" or .status == "requested")
+                  | select(.databaseId != $self)
+                  | select(.workflowName != "Flaky network check")
+                  | .databaseId
+                '
+            )"
+            if [ -z "$ids" ]; then
+              empty=$((empty + 1))
+              echo "no queued runs (idle poll ${empty})"
+              if [ "$empty" -ge 3 ]; then
+                echo "queued runs are gone"
+                exit 0
+              fi
+            else
+              empty=0
+              echo "$ids" | while read -r id; do
+                echo "cancel ${id}"
+                gh run cancel "$id" --repo "$REPO" || echo "cancel failed for ${id}"
+              done
+            fi
+            sleep 10
+          done
+          echo "queued runs remain"
+          gh run list --repo "$REPO" --branch "$BRANCH" --limit 100 \
+            --json databaseId,status,workflowName \
+            --jq '.[] | select(.status == "queued" or .status == "waiting" or .status == "pending" or .status == "requested")'
+          exit 1
