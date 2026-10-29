@@ -1,5 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { VizOrientation } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
@@ -16,6 +17,27 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder) => {
+    builder.addRadio({
+      path: 'orientation',
+      name: t('timeseries.name-orientation', 'Orientation'),
+      settings: {
+        options: [
+          { value: VizOrientation.Auto, label: t('timeseries.orientation-options.label-auto', 'Auto') },
+          {
+            value: VizOrientation.Horizontal,
+            label: t('timeseries.orientation-options.label-horizontal', 'Horizontal'),
+          },
+          {
+            value: VizOrientation.Vertical,
+            label: t('timeseries.orientation-options.label-vertical', 'Vertical'),
+          },
+        ],
+      },
+      // Auto matches panels saved without this option: the plot treats Auto and an
+      // omitted orientation the same as Horizontal (time on the X axis).
+      defaultValue: VizOrientation.Auto,
+    });
+
     commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
     commonOptionsBuilder.addLegendOptions(builder, true, true);
 

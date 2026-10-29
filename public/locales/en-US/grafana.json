@@ -17093,9 +17093,15 @@
       "title-the-input-expects-a-segment-list": "The input expects a segment list",
       "tooltip-help": "Help"
     },
+    "name-orientation": "Orientation",
     "name-time-zone": "Time zone",
     "nulls-threshold-input": {
       "placeholder-never": "Never"
+    },
+    "orientation-options": {
+      "label-auto": "Auto",
+      "label-horizontal": "Horizontal",
+      "label-vertical": "Vertical"
     },
     "outside-range-plugin": {
       "data-outside-time-range": "Data outside time range",
