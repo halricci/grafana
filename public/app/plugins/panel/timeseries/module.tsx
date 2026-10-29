@@ -1,5 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { VizOrientation } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
@@ -32,13 +33,37 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
       showIf: (c) => c.legend.showLegend,
     });
 
+    const axisCategory = [t('timeseries.category-axis', 'Axis')];
+
     builder.addCustomEditor({
       id: 'timezone',
       name: t('timeseries.name-time-zone', 'Time zone'),
       path: 'timezone',
-      category: [t('timeseries.category-axis', 'Axis')],
+      category: axisCategory,
       editor: TimezonesEditor,
       defaultValue: undefined,
+    });
+
+    builder.addRadio({
+      path: 'orientation',
+      name: t('timeseries.config.name-orientation', 'Orientation'),
+      category: axisCategory,
+      settings: {
+        options: [
+          { value: VizOrientation.Auto, label: t('timeseries.config.orientation-options.label-auto', 'Auto') },
+          {
+            value: VizOrientation.Horizontal,
+            label: t('timeseries.config.orientation-options.label-horizontal', 'Horizontal'),
+          },
+          {
+            value: VizOrientation.Vertical,
+            label: t('timeseries.config.orientation-options.label-vertical', 'Vertical'),
+          },
+        ],
+      },
+      // Omitted orientation already draws time on the x-axis. Horizontal keeps that
+      // appearance; Auto is the same drawing path and would imply a size-based flip.
+      defaultValue: VizOrientation.Horizontal,
     });
 
     addAnnotationOptions(builder);

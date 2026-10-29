@@ -11,8 +11,9 @@ import {
   type PanelProps,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { PanelContextProvider } from '@grafana/ui';
+import { LegendDisplayMode, ScaleOrientation, SortOrder, TooltipDisplayMode, VizOrientation } from '@grafana/schema';
+import { PanelContextProvider, type UPlotConfigBuilder } from '@grafana/ui';
+import * as timeSeriesUtils from 'app/core/components/TimeSeries/utils';
 
 import { getPanelProps } from '../test-utils';
 
@@ -299,4 +300,34 @@ describe('TimeSeriesPanel', () => {
       }
     });
   });
+
+  it.each([
+    ['omitted', undefined, ScaleOrientation.Horizontal],
+    ['auto', VizOrientation.Auto, ScaleOrientation.Horizontal],
+    ['horizontal', VizOrientation.Horizontal, ScaleOrientation.Horizontal],
+    ['vertical', VizOrientation.Vertical, ScaleOrientation.Vertical],
+  ] as const)(
+    'passes %s orientation to the plot builder and orients the time scale',
+    async (_name, orientation, timeAxis) => {
+      const spy = jest.spyOn(timeSeriesUtils, 'preparePlotConfigBuilder');
+
+      try {
+        renderPanel(orientation === undefined ? undefined : { orientation });
+
+        await waitFor(() =>
+          expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
+        );
+
+        expect(spy).toHaveBeenCalled();
+        for (const [config] of spy.mock.calls) {
+          expect(config.orientation).toBe(orientation);
+        }
+
+        const builder = spy.mock.results.at(-1)?.value as UPlotConfigBuilder;
+        expect(builder.scales.find((scale) => scale.props.scaleKey === 'x')?.props.orientation).toBe(timeAxis);
+      } finally {
+        spy.mockRestore();
+      }
+    }
+  );
 });
