@@ -64,8 +64,8 @@ export const TimeSeriesPanel = ({
   const { dataLinkPostProcessor } = useDataLinksContext();
 
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
-  // Vertical orientation is not available for users through config.
-  // It is simplified version of horizontal time series panel and it does not support all plugins.
+  // Vertical puts time on the Y axis. Annotation, exemplar, and outside-range plugins
+  // assume a horizontal time axis, so they stay off in that layout.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
   const {
     frames,
