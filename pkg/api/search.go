@@ -37,7 +37,8 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	permission := dashboardaccess.PERMISSION_VIEW
 
 	if deleted == "true" && c.GetOrgRole() != org.RoleAdmin {
-		return response.Error(http.StatusUnauthorized, "Unauthorized", nil)
+		// Signed-in callers must get 403. 401 is reserved for missing auth; clients treat it as a dead session and log the user out.
+		return response.Error(http.StatusForbidden, "Unauthorized", nil)
 	}
 
 	if limit > 5000 {
