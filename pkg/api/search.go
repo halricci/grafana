@@ -37,7 +37,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	permission := dashboardaccess.PERMISSION_VIEW
 
 	if deleted == "true" && c.GetOrgRole() != org.RoleAdmin {
-		return response.Error(http.StatusUnauthorized, "Unauthorized", nil)
+		return response.Error(http.StatusForbidden, "Unauthorized", nil)
 	}
 
 	if limit > 5000 {
