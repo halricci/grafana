@@ -1,3 +1,4 @@
+import { act } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
@@ -37,18 +38,20 @@ describe('CorrelationsPageWrapper', () => {
   });
 
   describe('with the kubernetes feature toggle on', () => {
-    it('uses the K8s correlations hook', () => {
+    it('uses the K8s correlations hook', async () => {
       config.featureToggles = { ...originalFeatureToggles, kubernetesCorrelations: true };
       render(<CorrelationsPageWrapper />);
       expect(mockUseCorrelationsK8s).toHaveBeenCalled();
+      await act(async () => {});
     });
   });
 
   describe('with the kubernetes feature toggle off', () => {
-    it('uses the legacy correlations hook', () => {
+    it('uses the legacy correlations hook', async () => {
       config.featureToggles = { ...originalFeatureToggles, kubernetesCorrelations: false };
       render(<CorrelationsPageWrapper />);
       expect(mockUseCorrelations).toHaveBeenCalled();
+      await act(async () => {});
     });
   });
 });

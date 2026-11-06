@@ -9,6 +9,7 @@ import {
   type CorrelationData,
   type CorrelationsData,
   type FetchError,
+  getDataSourceInstanceList,
   isFetchError,
   reportInteraction,
 } from '@grafana/runtime';
@@ -90,6 +91,27 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
   };
 
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+  const [hasDataSources, setHasDataSources] = useState<boolean>();
+
+  useEffect(() => {
+    let cancelled = false;
+    getDataSourceInstanceList({ all: true })
+      .then((dataSources) => {
+        if (!cancelled) {
+          // Built-ins such as -- Grafana -- are always registered, so an unfiltered list is never empty.
+          setHasDataSources(dataSources.some((dataSource) => !dataSource.meta.builtIn));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setHasDataSources(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const corrData = correlations?.correlations ?? [];
   const hasWritable = corrData.some(negate(isCorrelationsReadOnly));
 
@@ -208,8 +230,12 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
               <LoadingPlaceholder text={t('correlations.list.loading', 'loading...')} />
             </div>
           )}
-          {showEmptyListCTA && (
-            <EmptyCorrelationsCTA canWriteCorrelations={canWriteCorrelations} onClick={() => setIsAdding(true)} />
+          {showEmptyListCTA && hasDataSources !== undefined && (
+            <EmptyCorrelationsCTA
+              canWriteCorrelations={canWriteCorrelations}
+              hasDataSources={hasDataSources}
+              onClick={() => setIsAdding(true)}
+            />
           )}
           {
             // This error is not actionable, it'd be nice to have a recovery button
