@@ -1,12 +1,31 @@
+import { locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Card, EmptyState } from '@grafana/ui';
+import { Button, Card, EmptyState, LinkButton } from '@grafana/ui';
+import { ROUTES } from 'app/features/connections/constants';
 
 interface Props {
   onClick?: () => void;
   canWriteCorrelations: boolean;
+  hasDataSources: boolean;
 }
-export const EmptyCorrelationsCTA = ({ onClick, canWriteCorrelations }: Props) => {
-  // TODO: if there are no datasources show a different message
+export const EmptyCorrelationsCTA = ({ onClick, canWriteCorrelations, hasDataSources }: Props) => {
+  if (canWriteCorrelations && !hasDataSources) {
+    return (
+      <EmptyState
+        variant="call-to-action"
+        button={
+          <LinkButton icon="database" href={locationUtil.assureBaseUrl(ROUTES.DataSourcesNew)} size="lg">
+            <Trans i18nKey="correlations.empty-state.add-data-source-button">Add new data source</Trans>
+          </LinkButton>
+        }
+        message={t('correlations.empty-state.no-data-sources-title', 'Add a data source first')}
+      >
+        <Trans i18nKey="correlations.empty-state.no-data-sources-description">
+          A correlation needs a source data source. Add one in Connections, then come back to create a correlation.
+        </Trans>
+      </EmptyState>
+    );
+  }
 
   return canWriteCorrelations ? (
     <EmptyState

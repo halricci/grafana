@@ -3,7 +3,7 @@ import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceListItem, type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   type CorrelationData,
@@ -11,6 +11,7 @@ import {
   type FetchError,
   isFetchError,
   reportInteraction,
+  useDataSourceInstanceList,
 } from '@grafana/runtime';
 import {
   Badge,
@@ -49,6 +50,12 @@ type CorrelationsPageProps = {
   >;
   error?: Error | FetchError;
 };
+
+// The instance list appends the built-in -- Grafana -- data source even when nothing has been
+// configured, and it cannot be a correlation source. Ignore the built-ins the legacy list omits.
+function isConfiguredDataSource(item: DataSourceInstanceListItem): boolean {
+  return item.meta.id !== 'grafana' && item.meta.id !== 'mixed' && item.meta.id !== 'dashboard';
+}
 
 const collator = new Intl.Collator();
 
@@ -90,6 +97,10 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
   };
 
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+  const { items: dataSources, isLoading: areDataSourcesLoading } = useDataSourceInstanceList({
+    filter: isConfiguredDataSource,
+  });
+  const hasDataSources = dataSources.length > 0;
   const corrData = correlations?.correlations ?? [];
   const hasWritable = corrData.some(negate(isCorrelationsReadOnly));
 
@@ -179,7 +190,7 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
     [RowActions, canWriteCorrelations, hasWritable]
   );
 
-  const showEmptyListCTA = corrData.length === 0 && !isAdding && !error;
+  const showEmptyListCTA = corrData.length === 0 && !isAdding && !error && !areDataSourcesLoading;
   const addButton = canWriteCorrelations && corrData.length !== 0 && !isAdding && (
     <Button icon="plus" onClick={() => setIsAdding(true)}>
       <Trans i18nKey="correlations.add-new">Add new</Trans>
@@ -209,7 +220,11 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
             </div>
           )}
           {showEmptyListCTA && (
-            <EmptyCorrelationsCTA canWriteCorrelations={canWriteCorrelations} onClick={() => setIsAdding(true)} />
+            <EmptyCorrelationsCTA
+              canWriteCorrelations={canWriteCorrelations}
+              hasDataSources={hasDataSources}
+              onClick={() => setIsAdding(true)}
+            />
           )}
           {
             // This error is not actionable, it'd be nice to have a recovery button
