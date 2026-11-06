@@ -15,34 +15,40 @@ interface Props {
   options: TimeOption[];
   value?: TimeOption;
   onChange: (option: TimeOption) => void;
+  onRemove?: (option: TimeOption) => void;
   placeholderEmpty?: ReactNode;
+  headerAction?: ReactNode;
+  testId?: string;
 }
 
 export const TimeRangeList = (props: Props) => {
   const styles = useStyles2(getStyles);
-  const { title, options, placeholderEmpty } = props;
+  const { title, options, placeholderEmpty, headerAction, testId } = props;
 
-  if (typeof placeholderEmpty !== 'undefined' && options.length <= 0) {
+  // An empty history list hides its heading. A list with a header action (save) keeps the heading
+  // so the action stays available when there is nothing saved yet.
+  if (typeof placeholderEmpty !== 'undefined' && options.length <= 0 && !headerAction) {
     return <>{placeholderEmpty}</>;
   }
 
-  if (!title) {
+  if (!title && !headerAction) {
     return <Options {...props} />;
   }
 
   return (
-    <section aria-label={title}>
+    <section aria-label={title} data-testid={testId}>
       <fieldset>
         <div className={styles.title}>
           <TimePickerTitle>{title}</TimePickerTitle>
+          {headerAction}
         </div>
-        <Options {...props} />
+        {options.length === 0 && placeholderEmpty != null ? placeholderEmpty : <Options {...props} />}
       </fieldset>
     </section>
   );
 };
 
-const Options = ({ options, value, onChange, title }: Props) => {
+const Options = ({ options, value, onChange, onRemove, title }: Props) => {
   const styles = useStyles2(getOptionsStyles);
 
   const localRef = useRef<HTMLUListElement>(null);
@@ -63,6 +69,7 @@ const Options = ({ options, value, onChange, title }: Props) => {
             value={option}
             selected={isEqual(option, value)}
             onSelect={onChange}
+            onRemove={onRemove}
             name={title ?? t('time-picker.time-range.default-title', 'Time ranges')}
           />
         ))}
@@ -87,6 +94,7 @@ const getStyles = () => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: '8px',
     padding: '8px 16px 5px 9px',
   }),
 });

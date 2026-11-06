@@ -1,7 +1,9 @@
 import { render, type RenderResult, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 
-import { dateTime, type TimeRange } from '@grafana/data';
+import { dateTime, type TimeOption, type TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { type PropsWithScreenSize, TimePickerContentWithScreenSize } from './TimePickerContent';
 
@@ -193,7 +195,92 @@ describe('TimePickerContent', () => {
       expect(screen.queryByText(/Last invalid/i)).not.toBeInTheDocument();
     });
   });
+
+  describe('personal quick ranges', () => {
+    it('labels personal ranges separately from dashboard ranges and leaves recent ranges in place', async () => {
+      const onChange = jest.fn();
+      const user = userEvent.setup();
+      render(<PersonalRangesHarness onChange={onChange} />);
+
+      expect(screen.getByTestId(selectors.components.TimePicker.personalQuickRanges)).toHaveTextContent(
+        'Your quick ranges'
+      );
+      expect(screen.getByText('No saved ranges yet.')).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.TimePicker.dashboardQuickRanges)).toHaveTextContent(
+        'Dashboard quick ranges'
+      );
+      expect(screen.getByText('Last 15 minutes')).toBeInTheDocument();
+      expect(screen.getByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
+
+      await user.click(screen.getByTestId(selectors.components.TimePicker.savePersonalQuickRange));
+
+      expect(onChange).not.toHaveBeenCalled();
+      expect(screen.getByText('Last 45 minutes')).toBeInTheDocument();
+      expect(screen.getByText('Last 15 minutes')).toBeInTheDocument();
+      expect(screen.queryByText('No saved ranges yet.')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Current range saved' })).toBeDisabled();
+
+      await user.click(screen.getByText('Last 45 minutes'));
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ raw: { from: 'now-45m', to: 'now' } }));
+
+      await user.click(screen.getByTestId(selectors.components.TimePicker.removePersonalQuickRange('now-45m', 'now')));
+
+      expect(screen.queryByText('Last 45 minutes')).not.toBeInTheDocument();
+      expect(screen.getByText('Last 15 minutes')).toBeInTheDocument();
+      expect(screen.getByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
+    });
+
+    it('saves an absolute range as ISO strings', async () => {
+      const onSave = jest.fn();
+      const user = userEvent.setup();
+      render(
+        <TimePickerContentWithScreenSize
+          onChangeTimeZone={noop}
+          onChange={noop}
+          quickOptions={[]}
+          personalQuickRanges={[]}
+          onSavePersonalQuickRange={onSave}
+          timeZone="utc"
+          value={createAbsoluteTimeRange('2022-12-03T00:00:00.000Z', '2022-12-03T23:59:59.000Z')}
+          isFullscreen={true}
+          showHistory={false}
+        />
+      );
+
+      await user.click(screen.getByTestId(selectors.components.TimePicker.savePersonalQuickRange));
+
+      expect(onSave).toHaveBeenCalledWith({
+        from: '2022-12-03T00:00:00.000Z',
+        to: '2022-12-03T23:59:59.000Z',
+        display: '2022-12-03 00:00:00 to 2022-12-03 23:59:59',
+      });
+    });
+  });
 });
+
+function PersonalRangesHarness({ onChange }: { onChange: (range: TimeRange) => void }) {
+  const [personal, setPersonal] = useState<TimeOption[]>([]);
+  const value = createRelativeTimeRange();
+  value.raw = { from: 'now-45m', to: 'now' };
+
+  return (
+    <TimePickerContentWithScreenSize
+      onChangeTimeZone={noop}
+      onChange={onChange}
+      quickOptions={[{ from: 'now-15m', to: 'now', display: 'Last 15 minutes' }]}
+      quickOptionsLabel="Dashboard quick ranges"
+      quickOptionsTestId={selectors.components.TimePicker.dashboardQuickRanges}
+      personalQuickRanges={personal}
+      onSavePersonalQuickRange={(option) => setPersonal([option])}
+      onRemovePersonalQuickRange={() => setPersonal([])}
+      timeZone="utc"
+      value={value}
+      isFullscreen={true}
+      showHistory={true}
+      history={[createAbsoluteTimeRange('2019-12-17T07:48:27.433Z', '2019-12-17T07:49:27.433Z')]}
+    />
+  );
+}
 
 function noop(): {} {
   return {};

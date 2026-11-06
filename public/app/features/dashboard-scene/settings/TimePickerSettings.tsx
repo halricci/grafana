@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { CollapsableSection, Field, Input, Switch, TimeZonePicker, type WeekStart, WeekStartPicker } from '@grafana/ui';
 
 import { AutoRefreshIntervals } from './AutoRefreshIntervals';
+import { PersonalQuickRangesSettings } from './PersonalQuickRangesSettings';
 
 interface Props {
   onWeekStartChange: (weekStart?: WeekStart) => void;
@@ -112,6 +113,7 @@ export const TimePickerSettings = memo(
             defaultValue={nowDelay}
           />
         </Field>
+        <PersonalQuickRangesSettings />
         <Field label={t('dashboard-settings.time-picker.hide-time-picker', 'Hide time picker')}>
           <Switch id="hide-time-picker-toggle" value={!!timePickerHidden} onChange={handleHideTimePickerChange} />
         </Field>
