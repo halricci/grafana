@@ -1,14 +1,49 @@
+import { locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Card, EmptyState } from '@grafana/ui';
+import { Button, Card, EmptyState, LinkButton } from '@grafana/ui';
+import { ROUTES } from 'app/features/connections/constants';
 
 interface Props {
   onClick?: () => void;
   canWriteCorrelations: boolean;
+  hasDataSources: boolean;
 }
-export const EmptyCorrelationsCTA = ({ onClick, canWriteCorrelations }: Props) => {
-  // TODO: if there are no datasources show a different message
+export const EmptyCorrelationsCTA = ({ onClick, canWriteCorrelations, hasDataSources }: Props) => {
+  if (!canWriteCorrelations) {
+    return (
+      <Card noMargin>
+        <Card.Heading>
+          <Trans i18nKey="correlations.empty-correlations-cta.there-are-no-correlations-configured-yet">
+            There are no correlations configured yet.
+          </Trans>
+        </Card.Heading>
+        <Card.Description>
+          <Trans i18nKey="correlations.empty-correlations-cta.please-contact-administrator-create-correlations">
+            Please contact your administrator to create new correlations.
+          </Trans>
+        </Card.Description>
+      </Card>
+    );
+  }
 
-  return canWriteCorrelations ? (
+  if (!hasDataSources) {
+    return (
+      <EmptyState
+        variant="call-to-action"
+        button={
+          <LinkButton icon="database" href={locationUtil.assureBaseUrl(ROUTES.DataSourcesNew)} size="lg">
+            <Trans i18nKey="correlations.empty-state.no-data-sources.button-title">Add data source</Trans>
+          </LinkButton>
+        }
+        message={t(
+          'correlations.empty-state.no-data-sources.title',
+          'Add a data source before defining correlations'
+        )}
+      />
+    );
+  }
+
+  return (
     <EmptyState
       variant="call-to-action"
       button={
@@ -22,18 +57,5 @@ export const EmptyCorrelationsCTA = ({ onClick, canWriteCorrelations }: Props) =
         You can also define correlations via datasource provisioning
       </Trans>
     </EmptyState>
-  ) : (
-    <Card noMargin>
-      <Card.Heading>
-        <Trans i18nKey="correlations.empty-correlations-cta.there-are-no-correlations-configured-yet">
-          There are no correlations configured yet.
-        </Trans>
-      </Card.Heading>
-      <Card.Description>
-        <Trans i18nKey="correlations.empty-correlations-cta.please-contact-administrator-create-correlations">
-          Please contact your administrator to create new correlations.
-        </Trans>
-      </Card.Description>
-    </Card>
   );
 };

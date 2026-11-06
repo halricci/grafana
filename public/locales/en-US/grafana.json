@@ -5431,6 +5431,10 @@
     },
     "empty-state": {
       "button-title": "Add correlation",
+      "no-data-sources": {
+        "button-title": "Add data source",
+        "title": "Add a data source before defining correlations"
+      },
       "pro-tip": "You can also define correlations via datasource provisioning",
       "title": "You haven't defined any correlations yet"
     },
