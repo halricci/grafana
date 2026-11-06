@@ -3,9 +3,11 @@ import { memo, useId } from 'react';
 
 import { type GrafanaTheme2, type TimeOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
+import { IconButton } from '../../IconButton/IconButton';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -47,6 +49,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         top: 0,
       },
     }),
+    remove: css({
+      flexShrink: 0,
+    }),
   };
 };
 
@@ -54,22 +59,37 @@ interface Props {
   value: TimeOption;
   selected?: boolean;
   onSelect: (option: TimeOption) => void;
+  onRemove?: (option: TimeOption) => void;
   /**
    *  Input identifier. This should be the same for all options in a group.
    */
   name: string;
 }
 
-export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false, name }) => {
+export const TimeRangeOption = memo<Props>(({ value, onSelect, onRemove, selected = false, name }) => {
   const styles = useStyles2(getStyles);
   // In case there are more of the same timerange in the list
   const id = useId();
+  const removeLabel = t('time-picker.personal.remove', 'Remove {{display}}', { display: value.display });
 
   return (
     <li
       className={styles.container}
       data-testid={selectors.components.TimePicker.timeRangeOption(value.from, value.to)}
     >
+      {onRemove && (
+        <IconButton
+          className={styles.remove}
+          name="times"
+          size="sm"
+          tooltip={removeLabel}
+          data-testid={selectors.components.TimePicker.removePersonalQuickRange(value.from, value.to)}
+          onClick={(event) => {
+            event.stopPropagation();
+            onRemove(value);
+          }}
+        />
+      )}
       <input
         className={styles.radio}
         checked={selected}

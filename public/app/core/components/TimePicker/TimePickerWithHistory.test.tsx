@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { getDefaultTimeRange, systemDateFormats } from '@grafana/data';
 
 import { TimePickerWithHistory } from './TimePickerWithHistory';
+import { PERSONAL_QUICK_RANGES_STORAGE_KEY } from './personalQuickRanges';
 
 describe('TimePickerWithHistory', () => {
   // In some of the tests we close and re-open the picker. When we do that we must re-find these inputs
@@ -168,6 +169,19 @@ describe('TimePickerWithHistory', () => {
     await userEvent.click(screen.getByLabelText(/Time range selected/));
 
     expect(screen.getByText(/03-12-2022 00:00:00 to 03-12-2022 23:59:59/i)).toBeInTheDocument();
+  });
+
+  it('saves a personal quick range without writing recently used ranges', async () => {
+    const timeRange = getDefaultTimeRange();
+    render(<TimePickerWithHistory value={timeRange} {...props} />);
+    await userEvent.click(screen.getByLabelText(/Time range selected/));
+    await userEvent.click(screen.getByRole('button', { name: 'Save current range' }));
+
+    expect(JSON.parse(window.localStorage.getItem(PERSONAL_QUICK_RANGES_STORAGE_KEY) ?? '[]')).toEqual([
+      { from: 'now-6h', to: 'now', display: 'Last 6 hours' },
+    ]);
+    expect(window.localStorage.getItem(LOCAL_STORAGE_KEY)).toBeNull();
+    expect(screen.getByText(/It looks like you haven't used this time picker before/i)).toBeInTheDocument();
   });
 });
 

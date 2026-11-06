@@ -1,7 +1,9 @@
 import { render, screen } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { behaviors, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
+import { PERSONAL_QUICK_RANGES_STORAGE_KEY } from 'app/core/components/TimePicker/personalQuickRanges';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import * as utils from '../pages/utils';
@@ -126,6 +128,28 @@ describe('GeneralSettingsEditView', () => {
       const { settings } = await buildTestScene();
       render(<settings.Component model={settings} />);
       expect(await screen.findByText('Folder')).toBeInTheDocument();
+    });
+
+    it('saving a personal quick range does not change the dashboard', async () => {
+      window.localStorage.clear();
+      const { dashboard, settings } = await buildTestScene();
+      const quickRanges = settings.getDashboardControls().state.timePicker.state.quickRanges;
+      const saveModelBefore = JSON.parse(JSON.stringify(dashboard.getSaveModel()));
+      const { user } = render(<settings.Component model={settings} />);
+
+      expect(dashboard.state.isDirty).toBeFalsy();
+      await user.type(await screen.findByTestId(selectors.components.TimePicker.personalQuickRangeName), 'Overnight');
+      await user.type(screen.getByTestId(selectors.components.TimePicker.personalQuickRangeFrom), 'now-12h');
+      await user.type(screen.getByTestId(selectors.components.TimePicker.personalQuickRangeTo), 'now');
+      await user.click(screen.getByTestId(selectors.components.TimePicker.addPersonalQuickRange));
+
+      expect(await screen.findByText('Overnight (now-12h to now)')).toBeInTheDocument();
+      expect(JSON.parse(JSON.stringify(dashboard.getSaveModel()))).toEqual(saveModelBefore);
+      expect(settings.getDashboardControls().state.timePicker.state.quickRanges).toBe(quickRanges);
+      expect(JSON.parse(window.localStorage.getItem(PERSONAL_QUICK_RANGES_STORAGE_KEY) ?? '[]')).toEqual([
+        { display: 'Overnight', from: 'now-12h', to: 'now' },
+      ]);
+      window.localStorage.clear();
     });
 
     it('hides the Folder field when the dashboard is a template', async () => {
