@@ -1394,6 +1394,9 @@ export const versionedComponents = {
     quickAddButton: {
       '13.2.0': 'data-testid Quick add button',
     },
+    themeModeButton: {
+      '13.3.0': 'data-testid Theme mode button',
+    },
     shareDashboard: {
       '11.1.0': 'data-testid Share dashboard',
     },
