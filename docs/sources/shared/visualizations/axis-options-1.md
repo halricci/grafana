@@ -12,7 +12,6 @@ Options under the **Axis** section control how the x- and y-axes are rendered. S
 
 | Option                             | Description                                                                                                        |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Orientation                        | Choose **Horizontal** to display time on the x-axis or **Vertical** to display time on the y-axis. Annotations, exemplars, and x-axis panning aren't available in vertical orientation. |
 | Time zone                          | Add one or more time zones to display along the x-axis using the time zone picker. Use **+** to add entries and **x** to remove them. |
 | [Placement](#placement)            | Select the placement of the y-axis.                                                                                |
 | Label                              | Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override. |
