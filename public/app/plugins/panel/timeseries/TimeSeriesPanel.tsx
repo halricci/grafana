@@ -64,8 +64,8 @@ export const TimeSeriesPanel = ({
   const { dataLinkPostProcessor } = useDataLinksContext();
 
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
-  // Vertical orientation is not available for users through config.
-  // It is simplified version of horizontal time series panel and it does not support all plugins.
+  // Vertical orientation is a simplified version of the horizontal time series panel and does not support all plugins.
+  // XAxisInteractionAreaPlugin only tracks horizontal drags, so axis panning would move time along the wrong axis.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
   const {
     frames,
@@ -173,7 +173,7 @@ export const TimeSeriesPanel = ({
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
             )}
-            <XAxisInteractionAreaPlugin config={uplotConfig} queryZoom={onChangeTimeRange} />
+            {!isVerticallyOriented && <XAxisInteractionAreaPlugin config={uplotConfig} queryZoom={onChangeTimeRange} />}
             {options.tooltip.mode !== TooltipDisplayMode.None && (
               <TooltipPlugin2
                 config={uplotConfig}

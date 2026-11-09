@@ -12,9 +12,12 @@ import { useListFocus } from './hooks';
 
 interface Props {
   title?: string;
+  /** Input name for the option group. Falls back to `title`. */
+  groupName?: string;
   options: TimeOption[];
   value?: TimeOption;
   onChange: (option: TimeOption) => void;
+  onRemove?: (option: TimeOption) => void;
   placeholderEmpty?: ReactNode;
 }
 
@@ -42,11 +45,12 @@ export const TimeRangeList = (props: Props) => {
   );
 };
 
-const Options = ({ options, value, onChange, title }: Props) => {
+const Options = ({ options, value, onChange, onRemove, title, groupName }: Props) => {
   const styles = useStyles2(getOptionsStyles);
 
   const localRef = useRef<HTMLUListElement>(null);
   const [handleKeys] = useListFocus({ localRef, options });
+  const name = groupName ?? title ?? t('time-picker.time-range.default-title', 'Time ranges');
 
   return (
     <>
@@ -63,7 +67,8 @@ const Options = ({ options, value, onChange, title }: Props) => {
             value={option}
             selected={isEqual(option, value)}
             onSelect={onChange}
-            name={title ?? t('time-picker.time-range.default-title', 'Time ranges')}
+            onRemove={onRemove}
+            name={name}
           />
         ))}
       </ul>

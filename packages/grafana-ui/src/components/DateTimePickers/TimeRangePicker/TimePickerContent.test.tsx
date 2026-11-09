@@ -1,11 +1,15 @@
 import { render, type RenderResult, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTime, type TimeRange } from '@grafana/data';
+import { dateTime, store, type TimeRange } from '@grafana/data';
 
 import { type PropsWithScreenSize, TimePickerContentWithScreenSize } from './TimePickerContent';
+import { PERSONAL_QUICK_RANGES_KEY } from './userQuickRanges';
 
 describe('TimePickerContent', () => {
+  beforeEach(() => {
+    store.delete(PERSONAL_QUICK_RANGES_KEY);
+  });
   const absoluteValue = createAbsoluteTimeRange('2019-12-17T07:48:27.433Z', '2019-12-18T07:49:27.433Z');
   const relativeValue = createRelativeTimeRange();
   const history = [
@@ -183,6 +187,76 @@ describe('TimePickerContent', () => {
       expect(screen.queryByText(/Last 5 minutes/i)).not.toBeInTheDocument();
     });
 
+    it('shows saved ranges apart from dashboard ranges', async () => {
+      store.setObject(PERSONAL_QUICK_RANGES_KEY, [{ from: 'now-1h', to: 'now', display: 'Deploy window' }]);
+      renderComponent({ value: relativeValue });
+
+      expect(screen.getByRole('region', { name: 'Your ranges' })).toHaveTextContent('Deploy window');
+      expect(screen.getByRole('region', { name: 'Your ranges' })).toHaveTextContent('Saved in this browser');
+      expect(screen.getByRole('region', { name: 'Dashboard ranges' })).toHaveTextContent('Last 5 minutes');
+      expect(screen.queryByRole('button', { name: 'Remove Last 5 minutes' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Remove Deploy window' })).toBeInTheDocument();
+    });
+
+    it('saves the current range without applying it', async () => {
+      const onChange = jest.fn();
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue, onChange });
+
+      await user.type(screen.getByRole('textbox', { name: 'Name for this range' }), 'Deploy window');
+      await user.click(screen.getByRole('button', { name: 'Save current range' }));
+
+      expect(onChange).not.toHaveBeenCalled();
+      expect(store.getObject(PERSONAL_QUICK_RANGES_KEY)).toEqual([
+        { from: 'now-5m', to: 'now', display: 'Deploy window' },
+      ]);
+      expect(screen.getByRole('region', { name: 'Your ranges' })).toHaveTextContent('Deploy window');
+      expect(screen.getByRole('region', { name: 'Dashboard ranges' })).toHaveTextContent('Last 5 minutes');
+    });
+
+    it('removes a personal range and leaves dashboard ranges', async () => {
+      store.setObject(PERSONAL_QUICK_RANGES_KEY, [{ from: 'now-1h', to: 'now', display: 'Deploy window' }]);
+      const onChange = jest.fn();
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue, onChange });
+
+      await user.click(screen.getByRole('button', { name: 'Remove Deploy window' }));
+
+      expect(onChange).not.toHaveBeenCalled();
+      expect(screen.queryByText('Deploy window')).not.toBeInTheDocument();
+      expect(screen.getByText('Last 5 minutes')).toBeInTheDocument();
+      expect(store.getObject(PERSONAL_QUICK_RANGES_KEY)).toEqual([]);
+    });
+
+    it('keeps recently used absolute ranges when saving a personal range', async () => {
+      const user = userEvent.setup();
+      renderComponent({ value: absoluteValue, history });
+
+      await user.click(screen.getByRole('button', { name: 'Save current range' }));
+
+      expect(screen.getByText(/recently used absolute ranges/i)).toBeInTheDocument();
+      expect(screen.getByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
+      expect(screen.getByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).toBeInTheDocument();
+    });
+
+    it('filters personal ranges separately from dashboard ranges', async () => {
+      store.setObject(PERSONAL_QUICK_RANGES_KEY, [{ from: 'now-1h', to: 'now', display: 'Deploy window' }]);
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue });
+
+      const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
+      await user.type(searchInput, 'Deploy');
+
+      expect(screen.getByText('Deploy window')).toBeInTheDocument();
+      expect(screen.queryByText('Last 5 minutes')).not.toBeInTheDocument();
+
+      await user.clear(searchInput);
+      await user.type(searchInput, '15 minutes');
+
+      expect(screen.queryByText('Deploy window')).not.toBeInTheDocument();
+      expect(screen.getByText('Last 15 minutes')).toBeInTheDocument();
+    });
+
     it('does not show custom option for invalid time shortcuts', async () => {
       const user = userEvent.setup();
       renderComponent({ value: relativeValue });
@@ -206,11 +280,12 @@ function renderComponent({
   history = [],
   hideQuickRanges = false,
   hideTimeZone = false,
-}: Pick<PropsWithScreenSize, 'value'> & Partial<PropsWithScreenSize>): RenderResult {
+  onChange = noop,
+}: Pick<PropsWithScreenSize, 'value' | 'onChange'> & Partial<PropsWithScreenSize>): RenderResult {
   return render(
     <TimePickerContentWithScreenSize
       onChangeTimeZone={noop}
-      onChange={noop}
+      onChange={onChange}
       quickOptions={[
         { from: 'now-5m', to: 'now', display: 'Last 5 minutes' },
         { from: 'now-15m', to: 'now', display: 'Last 15 minutes' },

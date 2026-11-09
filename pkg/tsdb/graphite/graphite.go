@@ -54,12 +54,12 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("reading http client options: %w", err)
 		}
 
 		client, err := httpClientProvider.New(opts)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("creating http client: %w", err)
 		}
 
 		model := datasourceInfo{
@@ -75,7 +75,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*datasourceInfo, error) {
 	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting datasource instance: %w", err)
 	}
 	instance := i.(datasourceInfo)
 	return &instance, nil
@@ -89,20 +89,23 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	// get datasource info from context
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting datasource info: %w", err)
 	}
 
 	return s.RunQuery(ctx, req, dsInfo)
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return s.resourceHandler.CallResource(ctx, req, sender)
+	if err := s.resourceHandler.CallResource(ctx, req, sender); err != nil {
+		return fmt.Errorf("calling resource: %w", err)
+	}
+	return nil
 }
 
 func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, params URLParams) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
-		return nil, backend.DownstreamError(err)
+		return nil, fmt.Errorf("parsing datasource url: %w", backend.DownstreamError(err))
 	}
 
 	if params.SubPath != "" {

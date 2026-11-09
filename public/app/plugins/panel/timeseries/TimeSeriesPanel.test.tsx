@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -11,7 +11,7 @@ import {
   type PanelProps,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { PanelContextProvider } from '@grafana/ui';
 
 import { getPanelProps } from '../test-utils';
@@ -161,6 +161,37 @@ describe('TimeSeriesPanel', () => {
 
     expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
     expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
+  });
+
+  describe('time axis drag-to-pan', () => {
+    async function dragTimeAxis(orientation: VizOrientation) {
+      const onChangeTimeRange = jest.fn();
+      const props = getPanelProps<Options>({ ...defaultOptions, orientation }, { onChangeTimeRange });
+      props.data.series = [validFrame];
+      render(<TimeSeriesPanel {...props} />);
+
+      const container = screen.getByTestId(selectors.components.VizLayout.container);
+      await waitFor(() => expect(container.querySelector('.u-over')).toBeVisible());
+
+      const timeAxis = container.querySelector('.u-axis')!;
+      fireEvent.mouseDown(timeAxis, { clientX: 100 });
+      fireEvent.mouseMove(document, { clientX: 150 });
+      fireEvent.mouseUp(document, { clientX: 150 });
+
+      return onChangeTimeRange;
+    }
+
+    it('updates the time range when the time axis is dragged in horizontal orientation', async () => {
+      const onChangeTimeRange = await dragTimeAxis(VizOrientation.Horizontal);
+
+      expect(onChangeTimeRange).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not update the time range when the time axis is dragged in vertical orientation', async () => {
+      const onChangeTimeRange = await dragTimeAxis(VizOrientation.Vertical);
+
+      expect(onChangeTimeRange).not.toHaveBeenCalled();
+    });
   });
 
   describe('null values in the time field (#130379)', () => {

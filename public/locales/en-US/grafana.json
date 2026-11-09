@@ -8093,7 +8093,20 @@
       "refresh-live-dashboards-label": "Refresh live dashboards",
       "time-options-label": "Time options",
       "time-zone-label": "Time zone",
-      "week-start-label": "Week start"
+      "week-start-label": "Week start",
+      "your-ranges-add": "Add range",
+      "your-ranges-description": "Saved in this browser and shown on every dashboard. Adding or removing a range does not change the dashboard.",
+      "your-ranges-empty": "No quick ranges saved yet.",
+      "your-ranges-from": "From",
+      "your-ranges-from-error": "Enter a time like now-1h or a date",
+      "your-ranges-item": "{{display}} ({{from}} to {{to}})",
+      "your-ranges-label": "Your quick ranges",
+      "your-ranges-name": "Name",
+      "your-ranges-name-error": "Enter a name",
+      "your-ranges-name-placeholder": "Deploy window",
+      "your-ranges-remove": "Remove {{display}}",
+      "your-ranges-to": "To",
+      "your-ranges-to-error": "Enter a time like now or a date"
     },
     "variables": {
       "title": "Variables"
@@ -16977,6 +16990,18 @@
       "time-zone-option": "Time zone",
       "time-zone-selection": "Time zone selection"
     },
+    "personal": {
+      "empty": "No saved ranges yet.",
+      "hint": "Saved in this browser",
+      "name-label": "Name for this range",
+      "name-placeholder": "Name (optional)",
+      "remove": "Remove {{display}}",
+      "save": "Save current range",
+      "title": "Your ranges"
+    },
+    "quick": {
+      "dashboard-title": "Dashboard ranges"
+    },
     "range-content": {
       "apply-button": "Apply time range",
       "default-error": "Enter a date ({{dateExample}}) or relative time ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
@@ -17070,6 +17095,7 @@
         }
       }
     },
+    "description-orientation": "Vertical places time on the y-axis. Annotations, exemplars, and x-axis panning are not available in vertical orientation.",
     "insert-nulls-editor": {
       "disconnect-options": {
         "label-never": "Never",
@@ -17093,9 +17119,14 @@
       "title-the-input-expects-a-segment-list": "The input expects a segment list",
       "tooltip-help": "Help"
     },
+    "name-orientation": "Orientation",
     "name-time-zone": "Time zone",
     "nulls-threshold-input": {
       "placeholder-never": "Never"
+    },
+    "orientation-options": {
+      "label-horizontal": "Horizontal",
+      "label-vertical": "Vertical"
     },
     "outside-range-plugin": {
       "data-outside-time-range": "Data outside time range",

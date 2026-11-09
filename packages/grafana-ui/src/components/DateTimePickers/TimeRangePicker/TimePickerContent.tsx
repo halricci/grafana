@@ -21,11 +21,13 @@ import { Icon } from '../../Icon/Icon';
 import { TextLink } from '../../Link/TextLink';
 import { type WeekStart } from '../WeekStartPicker';
 
+import { PersonalQuickRanges } from './PersonalQuickRanges';
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeContent } from './TimeRangeContent';
 import { TimeRangeList } from './TimeRangeList';
 import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
+import { storedQuickRangeFromTimeRange, toTimeOptions, usePersonalQuickRanges } from './userQuickRanges';
 
 interface Props {
   value: TimeRange;
@@ -77,7 +79,9 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
     (isFullscreen && showHistory) || (!isFullscreen && ((showHistory && !isHistoryEmpty) || !hideQuickRanges));
   const styles = useStyles2(getStyles, isReversed, hideQuickRanges, isContainerTall, isFullscreen);
   const historyOptions = mapToHistoryOptions(history, timeZone);
-  const baseTimeOption = useTimeOption(value.raw, quickOptions);
+  const personal = usePersonalQuickRanges();
+  const personalOptions = toTimeOptions(personal.ranges);
+  const baseTimeOption = useTimeOption(value.raw, [...personalOptions, ...quickOptions]);
   const [searchTerm, setSearchQuery] = useState('');
 
   const { filteredQuickOptions, customTimeOption } = useMemo(() => {
@@ -94,6 +98,11 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
 
     return { filteredQuickOptions: filtered, customTimeOption: undefined };
   }, [searchTerm, quickOptions]);
+
+  const filteredPersonalOptions = personalOptions.filter((option) => {
+    const term = searchTerm.toLowerCase();
+    return `${option.display} ${option.from} ${option.to}`.toLowerCase().includes(term);
+  });
 
   const timeOption = customTimeOption || baseTimeOption;
 
@@ -118,7 +127,30 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
             <div className={styles.scrollContent}>
               {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
               {!hideQuickRanges && (
-                <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
+                <>
+                  <PersonalQuickRanges
+                    options={filteredPersonalOptions}
+                    hasSavedRanges={personal.ranges.length > 0}
+                    isFiltering={searchTerm.length > 0}
+                    selected={timeOption}
+                    onSelect={onChangeTimeOption}
+                    onSave={(name) => {
+                      const stored = storedQuickRangeFromTimeRange(value, name, personal.ranges);
+                      if (!stored) {
+                        return false;
+                      }
+                      personal.save(stored);
+                      return true;
+                    }}
+                    onRemove={(option) => personal.remove({ from: option.from, to: option.to })}
+                  />
+                  <TimeRangeList
+                    title={t('time-picker.quick.dashboard-title', 'Dashboard ranges')}
+                    options={filteredQuickOptions}
+                    onChange={onChangeTimeOption}
+                    value={timeOption}
+                  />
+                </>
               )}
             </div>
           </div>
