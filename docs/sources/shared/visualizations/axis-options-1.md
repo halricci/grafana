@@ -12,6 +12,7 @@ Options under the **Axis** section control how the x- and y-axes are rendered. S
 
 | Option                             | Description                                                                                                        |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Orientation                        | Choose which axis shows time: <ul><li>**Auto** - Keeps time on the horizontal axis.</li><li>**Horizontal** - Draws time on the x-axis. This is the default, including for saved dashboards that omit the option.</li><li>**Vertical** - Draws time on the y-axis. Annotations, exemplars, and the outside-range control stay unavailable.</li></ul> |
 | Time zone                          | Add one or more time zones to display along the x-axis using the time zone picker. Use **+** to add entries and **x** to remove them. |
 | [Placement](#placement)            | Select the placement of the y-axis.                                                                                |
 | Label                              | Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override. |

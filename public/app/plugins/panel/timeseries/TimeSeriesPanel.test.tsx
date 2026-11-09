@@ -11,8 +11,9 @@ import {
   type PanelProps,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, ScaleOrientation, SortOrder, TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { PanelContextProvider } from '@grafana/ui';
+import * as timeSeriesUtils from 'app/core/components/TimeSeries/utils';
 
 import { getPanelProps } from '../test-utils';
 
@@ -215,6 +216,52 @@ describe('TimeSeriesPanel', () => {
         ...props.options,
         legend: { ...props.options.legend, facetedFilterPinned: false },
       });
+    });
+  });
+
+  describe('orientation', () => {
+    let prepConfigSpy: jest.SpyInstance<ReturnType<typeof timeSeriesUtils.preparePlotConfigBuilder>>;
+
+    beforeEach(() => {
+      prepConfigSpy = jest.spyOn(timeSeriesUtils, 'preparePlotConfigBuilder');
+    });
+
+    afterEach(() => {
+      prepConfigSpy.mockRestore();
+    });
+
+    function timeScaleOrientation() {
+      for (let i = prepConfigSpy.mock.results.length - 1; i >= 0; i--) {
+        const builder = prepConfigSpy.mock.results[i]?.value;
+        const timeScale = builder?.scales?.find((scale) => scale.props.isTime);
+        if (timeScale) {
+          return {
+            passed: prepConfigSpy.mock.calls[i][0].orientation,
+            scale: timeScale.props.orientation,
+          };
+        }
+      }
+      return undefined;
+    }
+
+    it.each([
+      { orientation: VizOrientation.Auto, scale: ScaleOrientation.Horizontal, layout: 'horizontal' },
+      { orientation: VizOrientation.Horizontal, scale: ScaleOrientation.Horizontal, layout: 'horizontal' },
+      { orientation: VizOrientation.Vertical, scale: ScaleOrientation.Vertical, layout: 'vertical' },
+    ])('passes $orientation through and lays the time scale out $layout', async ({ orientation, scale }) => {
+      renderPanel({ orientation });
+
+      await waitFor(() => expect(timeScaleOrientation()).toBeDefined());
+
+      expect(timeScaleOrientation()).toEqual({ passed: orientation, scale });
+    });
+
+    it('keeps a saved panel that omits orientation on the horizontal time axis', async () => {
+      renderPanel();
+
+      await waitFor(() => expect(timeScaleOrientation()).toBeDefined());
+
+      expect(timeScaleOrientation()).toEqual({ passed: undefined, scale: ScaleOrientation.Horizontal });
     });
   });
 
