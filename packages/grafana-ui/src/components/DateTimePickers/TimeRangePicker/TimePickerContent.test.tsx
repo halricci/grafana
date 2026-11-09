@@ -1,7 +1,8 @@
 import { render, type RenderResult, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTime, type TimeRange } from '@grafana/data';
+import { dateTime, type TimeOption, type TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { type PropsWithScreenSize, TimePickerContentWithScreenSize } from './TimePickerContent';
 
@@ -194,6 +195,120 @@ describe('TimePickerContent', () => {
     });
   });
 });
+
+describe('personal and dashboard quick ranges', () => {
+  const timePicker = selectors.components.TimePicker;
+  const dashboardRanges: TimeOption[] = [{ display: 'Last 6 hours', from: 'now-6h', to: 'now' }];
+  const personalRanges: TimeOption[] = [{ display: 'Deploy window', from: 'now-2h', to: 'now' }];
+
+  it('labels personal ranges and dashboard ranges separately', () => {
+    renderRanges({
+      onChangePersonalQuickRanges: jest.fn(),
+      personalQuickRanges: personalRanges,
+      quickOptions: dashboardRanges,
+      quickOptionsTitle: 'Dashboard',
+    });
+
+    expect(screen.getByRole('region', { name: 'Your ranges' })).toHaveTextContent('Deploy window');
+    expect(screen.getByTestId(timePicker.dashboardRanges)).toHaveTextContent('Last 6 hours');
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+  });
+
+  it('saves the current range without applying it', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    const onChangePersonalQuickRanges = jest.fn();
+    renderRanges({
+      onChange,
+      onChangePersonalQuickRanges,
+      quickOptions: dashboardRanges,
+      quickOptionsTitle: 'Dashboard',
+    });
+
+    await user.click(screen.getByTestId(timePicker.savePersonalRangeButton));
+    const name = screen.getByTestId(timePicker.personalRangeNameInput);
+    await user.clear(name);
+    await user.type(name, 'Deploy window');
+    await user.click(screen.getByTestId(timePicker.confirmPersonalRangeButton));
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onChangePersonalQuickRanges).toHaveBeenCalledWith([{ display: 'Deploy window', from: 'now-5m', to: 'now' }]);
+    expect(screen.getByText('Last 6 hours')).toBeInTheDocument();
+  });
+
+  it('requires a name before saving', async () => {
+    const user = userEvent.setup();
+    const onChangePersonalQuickRanges = jest.fn();
+    renderRanges({ onChangePersonalQuickRanges });
+
+    await user.click(screen.getByTestId(timePicker.savePersonalRangeButton));
+    await user.clear(screen.getByTestId(timePicker.personalRangeNameInput));
+    await user.click(screen.getByTestId(timePicker.confirmPersonalRangeButton));
+
+    expect(screen.getByText('Enter a name')).toBeInTheDocument();
+    expect(onChangePersonalQuickRanges).not.toHaveBeenCalled();
+  });
+
+  it('removes a personal range without applying a time range', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    const onChangePersonalQuickRanges = jest.fn();
+    renderRanges({
+      onChange,
+      onChangePersonalQuickRanges,
+      personalQuickRanges: personalRanges,
+      quickOptions: dashboardRanges,
+      quickOptionsTitle: 'Dashboard',
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Remove Deploy window' }));
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onChangePersonalQuickRanges).toHaveBeenCalledWith([]);
+    expect(screen.getByText('Last 6 hours')).toBeInTheDocument();
+  });
+
+  it('keeps recently used absolute ranges available', () => {
+    renderRanges({
+      onChangePersonalQuickRanges: jest.fn(),
+      personalQuickRanges: personalRanges,
+      history: [createAbsoluteTimeRange('2019-12-17T07:48:27.433Z', '2019-12-17T07:49:27.433Z')],
+    });
+
+    expect(screen.getByText('Recently used absolute ranges')).toBeInTheDocument();
+    expect(screen.getByText('2019-12-17 07:48:27 to 2019-12-17 07:49:27')).toBeInTheDocument();
+  });
+
+  it('filters personal ranges with the quick range search', async () => {
+    const user = userEvent.setup();
+    renderRanges({
+      onChangePersonalQuickRanges: jest.fn(),
+      personalQuickRanges: personalRanges,
+      quickOptions: [{ from: 'now-5m', to: 'now', display: 'Last 5 minutes' }],
+    });
+
+    await user.type(screen.getByPlaceholderText(/search quick ranges/i), 'deploy');
+
+    expect(screen.getByText('Deploy window')).toBeInTheDocument();
+    expect(screen.queryByText('Last 5 minutes')).not.toBeInTheDocument();
+  });
+});
+
+function renderRanges(overrides: Partial<PropsWithScreenSize> = {}) {
+  return render(
+    <TimePickerContentWithScreenSize
+      onChangeTimeZone={noop}
+      onChange={jest.fn()}
+      quickOptions={[{ from: 'now-5m', to: 'now', display: 'Last 5 minutes' }]}
+      timeZone="utc"
+      value={createRelativeTimeRange()}
+      isFullscreen
+      showHistory
+      history={[]}
+      {...overrides}
+    />
+  );
+}
 
 function noop(): {} {
   return {};

@@ -471,6 +471,24 @@ export const versionedPages = {
         title: {
           '11.2.0': 'General',
         },
+        personalQuickRanges: {
+          '13.3.0': 'data-testid Dashboard settings personal quick ranges',
+        },
+        personalQuickRangeNameInput: {
+          '13.3.0': 'data-testid Dashboard settings personal quick range name input',
+        },
+        personalQuickRangeFromInput: {
+          '13.3.0': 'data-testid Dashboard settings personal quick range from input',
+        },
+        personalQuickRangeToInput: {
+          '13.3.0': 'data-testid Dashboard settings personal quick range to input',
+        },
+        addPersonalQuickRangeButton: {
+          '13.3.0': 'data-testid Dashboard settings add personal quick range button',
+        },
+        dashboardQuickRanges: {
+          '13.3.0': 'data-testid Dashboard settings dashboard quick ranges',
+        },
       },
       Annotations: {
         Edit: {

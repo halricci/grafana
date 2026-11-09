@@ -41,6 +41,7 @@ export function GeneralSettingsEditViewRenderer({ model }: SceneComponentProps<G
   const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
   const { intervals } = model.getRefreshPicker().useState();
   const { hideTimeControls } = model.getDashboardControls().useState();
+  const { quickRanges: dashboardQuickRanges } = model.getDashboardControls().state.timePicker.useState();
   const { enabled: liveNow } = model.getLiveNowTimer().useState();
   const EDITABLE_OPTIONS = [
     {
@@ -184,6 +185,7 @@ export function GeneralSettingsEditViewRenderer({ model }: SceneComponentProps<G
           onHideTimePickerChange={model.onHideTimePickerChange}
           onLiveNowChange={model.onLiveNowChange}
           refreshIntervals={intervals}
+          dashboardQuickRanges={dashboardQuickRanges}
           timePickerHidden={hideTimeControls}
           nowDelay={nowDelay || ''}
           liveNow={liveNow}

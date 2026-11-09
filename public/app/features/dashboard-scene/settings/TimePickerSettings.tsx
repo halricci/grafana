@@ -1,12 +1,13 @@
 import { isEmpty } from 'lodash';
 import { type FormEvent, memo, useState } from 'react';
 
-import { rangeUtil, type TimeZone } from '@grafana/data';
+import { rangeUtil, type TimeOption, type TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { CollapsableSection, Field, Input, Switch, TimeZonePicker, type WeekStart, WeekStartPicker } from '@grafana/ui';
 
 import { AutoRefreshIntervals } from './AutoRefreshIntervals';
+import { PersonalQuickRangesSettings } from './PersonalQuickRangesSettings';
 
 interface Props {
   onWeekStartChange: (weekStart?: WeekStart) => void;
@@ -16,6 +17,7 @@ interface Props {
   onHideTimePickerChange: (hide: boolean) => void;
   onLiveNowChange: (liveNow: boolean) => void;
   refreshIntervals?: string[];
+  dashboardQuickRanges?: TimeOption[];
   timePickerHidden?: boolean;
   nowDelay?: string;
   timezone: TimeZone;
@@ -32,6 +34,7 @@ export const TimePickerSettings = memo(
     onHideTimePickerChange,
     onLiveNowChange,
     refreshIntervals,
+    dashboardQuickRanges,
     timePickerHidden,
     nowDelay,
     timezone,
@@ -124,6 +127,7 @@ export const TimePickerSettings = memo(
         >
           <Switch id="refresh-live-dashboards-toggle" value={!!liveNow} onChange={handleLiveNowChange} />
         </Field>
+        <PersonalQuickRangesSettings dashboardQuickRanges={dashboardQuickRanges} />
       </CollapsableSection>
     );
   }

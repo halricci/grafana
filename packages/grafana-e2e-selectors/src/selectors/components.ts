@@ -248,6 +248,21 @@ export const versionedComponents = {
     timeRangeOption: {
       '13.2.0': (from: string, to: string) => `data-testid TimePicker time range option ${from} to ${to}`,
     },
+    personalRanges: {
+      '13.3.0': 'data-testid TimePicker personal ranges',
+    },
+    dashboardRanges: {
+      '13.3.0': 'data-testid TimePicker dashboard ranges',
+    },
+    savePersonalRangeButton: {
+      '13.3.0': 'data-testid TimePicker save personal range button',
+    },
+    confirmPersonalRangeButton: {
+      '13.3.0': 'data-testid TimePicker confirm personal range button',
+    },
+    personalRangeNameInput: {
+      '13.3.0': 'data-testid TimePicker personal range name input',
+    },
   },
   DataSourcePermissions: {
     form: { '9.5.0': () => 'form[name="addPermission"]' },

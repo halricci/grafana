@@ -21,6 +21,7 @@ import { Icon } from '../../Icon/Icon';
 import { TextLink } from '../../Link/TextLink';
 import { type WeekStart } from '../WeekStartPicker';
 
+import { PersonalQuickRangeSection } from './PersonalQuickRangeSection';
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeContent } from './TimeRangeContent';
@@ -36,6 +37,10 @@ interface Props {
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
   quickOptions?: TimeOption[];
+  /** Shown above quickOptions when those ranges belong to the dashboard rather than the built-in list. */
+  quickOptionsTitle?: string;
+  personalQuickRanges?: TimeOption[];
+  onChangePersonalQuickRanges?: (ranges: TimeOption[]) => void;
   history?: TimeRange[];
   showHistory?: boolean;
   className?: string;
@@ -58,6 +63,9 @@ interface FormProps extends Omit<Props, 'history'> {
 export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   const {
     quickOptions = [],
+    quickOptionsTitle,
+    personalQuickRanges = [],
+    onChangePersonalQuickRanges,
     isReversed,
     isFullscreen,
     hideQuickRanges,
@@ -77,7 +85,7 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
     (isFullscreen && showHistory) || (!isFullscreen && ((showHistory && !isHistoryEmpty) || !hideQuickRanges));
   const styles = useStyles2(getStyles, isReversed, hideQuickRanges, isContainerTall, isFullscreen);
   const historyOptions = mapToHistoryOptions(history, timeZone);
-  const baseTimeOption = useTimeOption(value.raw, quickOptions);
+  const baseTimeOption = useTimeOption(value.raw, [...personalQuickRanges, ...quickOptions]);
   const [searchTerm, setSearchQuery] = useState('');
 
   const { filteredQuickOptions, customTimeOption } = useMemo(() => {
@@ -94,6 +102,8 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
 
     return { filteredQuickOptions: filtered, customTimeOption: undefined };
   }, [searchTerm, quickOptions]);
+
+  const showPersonalRanges = Boolean(onChangePersonalQuickRanges);
 
   const timeOption = customTimeOption || baseTimeOption;
 
@@ -117,8 +127,26 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
             </div>
             <div className={styles.scrollContent}>
               {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
+              {!hideQuickRanges && showPersonalRanges && onChangePersonalQuickRanges && (
+                <PersonalQuickRangeSection
+                  ranges={personalQuickRanges}
+                  value={value}
+                  timeZone={timeZone}
+                  searchTerm={searchTerm}
+                  selected={timeOption}
+                  onSelect={onChangeTimeOption}
+                  onChangeRanges={onChangePersonalQuickRanges}
+                />
+              )}
               {!hideQuickRanges && (
-                <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
+                <div data-testid={quickOptionsTitle ? selectors.components.TimePicker.dashboardRanges : undefined}>
+                  <TimeRangeList
+                    title={quickOptionsTitle}
+                    options={filteredQuickOptions}
+                    onChange={onChangeTimeOption}
+                    value={timeOption}
+                  />
+                </div>
               )}
             </div>
           </div>

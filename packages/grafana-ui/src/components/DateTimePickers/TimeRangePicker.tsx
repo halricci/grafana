@@ -33,6 +33,7 @@ import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
 import { getTimeZoneDisplayInfo } from './TimeZonePicker/timeZoneUtils';
 import { type WeekStart } from './WeekStartPicker';
 import { getQuickOptions } from './options';
+import { usePersonalQuickRanges } from './personalQuickRanges';
 import { useTimeSync } from './utils/useTimeSync';
 
 /** @public */
@@ -70,6 +71,12 @@ export interface TimeRangePickerProps {
   onError?: (error?: string) => void;
   history?: TimeRange[];
   quickRanges?: TimeOption[];
+  /**
+   * Ranges the current user saved. When omitted, the picker loads and stores them in the browser
+   * so they survive the next dashboard the user opens. They are never written onto the dashboard.
+   */
+  personalQuickRanges?: TimeOption[];
+  onChangePersonalQuickRanges?: (ranges: TimeOption[]) => void;
   hideQuickRanges?: boolean;
   widthOverride?: number;
   isOnCanvas?: boolean;
@@ -99,6 +106,8 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
     quickRanges,
+    personalQuickRanges: controlledPersonalQuickRanges,
+    onChangePersonalQuickRanges,
     hideQuickRanges,
     widthOverride,
     isOnCanvas,
@@ -120,6 +129,23 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onChangeWithSync(timeRange);
     setOpen(false);
   };
+
+  const personalRangesAreControlled = controlledPersonalQuickRanges !== undefined;
+  const managedPersonalRanges = usePersonalQuickRanges(!personalRangesAreControlled);
+  const personalQuickRanges = controlledPersonalQuickRanges ?? managedPersonalRanges.ranges;
+  const handlePersonalQuickRangesChange = (ranges: TimeOption[]) => {
+    onChangePersonalQuickRanges?.(ranges);
+    if (!personalRangesAreControlled) {
+      managedPersonalRanges.replace(ranges);
+    }
+  };
+  // A non-empty quickRanges prop is the dashboard list. SceneTimePicker also forwards instance
+  // defaults through that prop, and either way they are not ranges the user saved.
+  const quickOptionsTitle =
+    Array.isArray(quickRanges) && quickRanges.length > 0
+      ? t('time-picker.range-picker.dashboard-ranges', 'Dashboard')
+      : undefined;
+  const labelRanges = [...personalQuickRanges, ...(quickRanges ?? [])];
 
   useEffect(() => {
     if (isOpen && onToolbarTimePickerClick) {
@@ -187,7 +213,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   const isFromAfterTo = value?.to?.isBefore(value.from);
   const timePickerIcon = isFromAfterTo ? 'exclamation-triangle' : 'clock-nine';
 
-  const currentTimeRange = formattedRange(value, timeZone, quickRanges);
+  const currentTimeRange = formattedRange(value, timeZone, labelRanges);
 
   return (
     <ButtonGroup className={styles.container} ref={refs.setReference}>
@@ -222,7 +248,12 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           type="button"
           variant={variant}
         >
-          <TimePickerButtonLabel {...props} />
+          <TimePickerButtonLabel
+            hideText={props.hideText}
+            value={value}
+            timeZone={timeZone}
+            quickRanges={labelRanges}
+          />
         </ToolbarButton>
       </Tooltip>
       {isOpen && (
@@ -248,7 +279,10 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                   hideTimeZone={hideTimeZone}
                   value={value}
                   onChange={onChange}
-                  quickOptions={quickRanges || getQuickOptions()}
+                  quickOptions={quickRanges ?? getQuickOptions()}
+                  quickOptionsTitle={quickOptionsTitle}
+                  personalQuickRanges={personalQuickRanges}
+                  onChangePersonalQuickRanges={handlePersonalQuickRangesChange}
                   history={history}
                   showHistory
                   widthOverride={widthOverride}
