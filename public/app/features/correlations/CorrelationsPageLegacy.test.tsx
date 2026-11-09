@@ -43,7 +43,8 @@ afterEach(() => {
 
 const renderWithContext = async (
   datasources: Record<string, DataSourceInstanceSettings> = {},
-  correlations: Correlation[] = []
+  correlations: Correlation[] = [],
+  options: { legacySrv?: 'mock' | 'none' } = {}
 ) => {
   const backend = {
     delete: async (url: string) => {
@@ -111,7 +112,7 @@ const renderWithContext = async (
       };
       return { settings, api: dsApi };
     }),
-    { legacySrv: 'mock' }
+    { legacySrv: options.legacySrv ?? 'mock' }
   );
   dataSourceFallbacks = watchDataSourceFallbacks();
 
@@ -219,6 +220,40 @@ afterAll(() => {
 });
 
 describe('CorrelationsPage - Legacy', () => {
+  describe('With no configurable data sources', () => {
+    it('links to Connections to add a data source instead of adding a correlation', async () => {
+      await renderWithContext({});
+
+      const addDataSource = await screen.findByRole('link', { name: 'Add data source' });
+      expect(addDataSource).toHaveAttribute('href', '/connections/datasources/new');
+      expect(screen.queryByRole('button', { name: 'Add correlation' })).not.toBeInTheDocument();
+    });
+
+    it('ignores the built-in Grafana data source', async () => {
+      await renderWithContext(
+        {
+          grafana: mockDataSource(
+            {
+              uid: 'grafana',
+              name: '-- Grafana --',
+              type: 'grafana',
+              readOnly: true,
+              jsonData: {},
+            },
+            { id: 'grafana', builtIn: true, metrics: true }
+          ),
+        },
+        [],
+        // The legacy list mock ignores filters. With no service, an empty filtered list stays empty
+        // instead of falling back to the unfiltered built-in.
+        { legacySrv: 'none' }
+      );
+
+      expect(await screen.findByRole('link', { name: 'Add data source' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Add correlation' })).not.toBeInTheDocument();
+    });
+  });
+
   describe('With no correlations', () => {
     beforeEach(async () => {
       await renderWithContext({
