@@ -211,6 +211,14 @@ The tooltip also provides the following options:
 
 For more information, refer to the [Configure legend documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-legend/#series-visibility).
 
+### Orientation
+
+The **Orientation** option controls which axis shows time.
+
+- **Auto**: Time runs along the x-axis. This is the default, and panels saved without the option keep this layout.
+- **Horizontal**: Time runs along the x-axis.
+- **Vertical**: Time runs along the y-axis, from bottom to top. Annotations, exemplars, and the data-outside-time-range control stay hidden in this layout.
+
 ### Axis options
 
 {{< docs/shared lookup="visualizations/axis-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}

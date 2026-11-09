@@ -11,8 +11,9 @@ import {
   type PanelProps,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { PanelContextProvider } from '@grafana/ui';
+import { LegendDisplayMode, ScaleOrientation, SortOrder, TooltipDisplayMode, VizOrientation } from '@grafana/schema';
+import { PanelContextProvider, type UPlotConfigBuilder } from '@grafana/ui';
+import * as timeSeriesUtils from 'app/core/components/TimeSeries/utils';
 
 import { getPanelProps } from '../test-utils';
 
@@ -297,6 +298,53 @@ describe('TimeSeriesPanel', () => {
         );
         expect(icon.style.backgroundSize).toBe('6px 4px');
       }
+    });
+  });
+
+  describe('orientation', () => {
+    let prepConfigSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      prepConfigSpy = jest.spyOn(timeSeriesUtils, 'preparePlotConfigBuilder');
+    });
+
+    afterEach(() => {
+      prepConfigSpy.mockRestore();
+    });
+
+    it.each([
+      {
+        name: 'omitted, as on a saved dashboard',
+        options: undefined,
+        passed: undefined,
+        timeScale: ScaleOrientation.Horizontal,
+      },
+      {
+        name: 'Auto',
+        options: { orientation: VizOrientation.Auto },
+        passed: VizOrientation.Auto,
+        timeScale: ScaleOrientation.Horizontal,
+      },
+      {
+        name: 'Horizontal',
+        options: { orientation: VizOrientation.Horizontal },
+        passed: VizOrientation.Horizontal,
+        timeScale: ScaleOrientation.Horizontal,
+      },
+      {
+        name: 'Vertical',
+        options: { orientation: VizOrientation.Vertical },
+        passed: VizOrientation.Vertical,
+        timeScale: ScaleOrientation.Vertical,
+      },
+    ])('passes $name orientation to the renderer', ({ options, passed, timeScale }) => {
+      renderPanel(options);
+
+      expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeInTheDocument();
+      expect(prepConfigSpy).toHaveBeenCalledWith(expect.objectContaining({ orientation: passed }));
+
+      const builder = prepConfigSpy.mock.results.at(-1)?.value as UPlotConfigBuilder;
+      expect(builder.scales.find((scale) => scale.props.isTime)?.props.orientation).toBe(timeScale);
     });
   });
 });

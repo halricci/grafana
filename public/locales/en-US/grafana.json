@@ -17097,6 +17097,12 @@
     "nulls-threshold-input": {
       "placeholder-never": "Never"
     },
+    "orientation": {
+      "label-auto": "Auto",
+      "label-horizontal": "Horizontal",
+      "label-vertical": "Vertical",
+      "name": "Orientation"
+    },
     "outside-range-plugin": {
       "data-outside-time-range": "Data outside time range",
       "zoom-to-data": "Zoom to data"
