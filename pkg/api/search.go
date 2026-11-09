@@ -20,6 +20,7 @@ import (
 // Responses:
 // 200: searchResponse
 // 401: unauthorisedError
+// 403: forbiddenError
 // 422: unprocessableEntityError
 // 500: internalServerError
 func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
@@ -37,6 +38,11 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	permission := dashboardaccess.PERMISSION_VIEW
 
 	if deleted == "true" && c.GetOrgRole() != org.RoleAdmin {
+		// 401 is only for missing credentials. Signed-in callers that lack
+		// org admin must get 403 so clients do not treat this as an expired session.
+		if c.IsSignedIn {
+			return response.Error(http.StatusForbidden, "Unauthorized", nil)
+		}
 		return response.Error(http.StatusUnauthorized, "Unauthorized", nil)
 	}
 
