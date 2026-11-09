@@ -6,6 +6,13 @@ import CorrelationsPageWrapper from './CorrelationsPageWrapper';
 
 jest.mock('app/core/services/context_srv');
 
+// The page loads data sources after render. A synchronous result keeps this suite focused on
+// which correlations hook the wrapper selects.
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
+}));
+
 const mockUseCorrelations = jest.fn().mockReturnValue({
   remove: { execute: jest.fn() },
   get: { execute: jest.fn(), value: [], loading: false, error: undefined },

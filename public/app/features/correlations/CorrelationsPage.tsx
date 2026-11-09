@@ -3,7 +3,7 @@ import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceListItem, type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   type CorrelationData,
@@ -11,6 +11,7 @@ import {
   type FetchError,
   isFetchError,
   reportInteraction,
+  useDataSourceInstanceList,
 } from '@grafana/runtime';
 import {
   Badge,
@@ -49,6 +50,14 @@ type CorrelationsPageProps = {
   >;
   error?: Error | FetchError;
 };
+
+const BUILT_IN_DATA_SOURCE_IDS = new Set(['grafana', 'mixed', 'dashboard']);
+
+// Built-in sources are present even when the org has configured none, so they cannot
+// satisfy the requirement that a correlation has a source data source.
+function isConfiguredDataSource(item: DataSourceInstanceListItem): boolean {
+  return !item.meta.builtIn && !BUILT_IN_DATA_SOURCE_IDS.has(item.meta.id);
+}
 
 const collator = new Intl.Collator();
 
@@ -90,6 +99,13 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
   };
 
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+  const {
+    items: dataSources,
+    isLoading: dataSourcesLoading,
+    error: dataSourcesError,
+  } = useDataSourceInstanceList({ all: true });
+  // A failed list must not claim there are no data sources.
+  const hasDataSources = dataSourcesError != null || dataSources.some(isConfiguredDataSource);
   const corrData = correlations?.correlations ?? [];
   const hasWritable = corrData.some(negate(isCorrelationsReadOnly));
 
@@ -179,7 +195,8 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
     [RowActions, canWriteCorrelations, hasWritable]
   );
 
-  const showEmptyListCTA = corrData.length === 0 && !isAdding && !error;
+  // Wait for the data source list so the empty state does not flash the wrong call to action.
+  const showEmptyListCTA = corrData.length === 0 && !isAdding && !error && !dataSourcesLoading;
   const addButton = canWriteCorrelations && corrData.length !== 0 && !isAdding && (
     <Button icon="plus" onClick={() => setIsAdding(true)}>
       <Trans i18nKey="correlations.add-new">Add new</Trans>
@@ -209,7 +226,11 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
             </div>
           )}
           {showEmptyListCTA && (
-            <EmptyCorrelationsCTA canWriteCorrelations={canWriteCorrelations} onClick={() => setIsAdding(true)} />
+            <EmptyCorrelationsCTA
+              canWriteCorrelations={canWriteCorrelations}
+              hasDataSources={hasDataSources}
+              onClick={() => setIsAdding(true)}
+            />
           )}
           {
             // This error is not actionable, it'd be nice to have a recovery button

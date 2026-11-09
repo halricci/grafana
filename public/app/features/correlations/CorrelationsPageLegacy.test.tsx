@@ -317,6 +317,41 @@ describe('CorrelationsPage - Legacy', () => {
     });
   });
 
+  describe('With no configured data sources', () => {
+    it('links to add a data source when the only source is built-in Grafana', async () => {
+      await renderWithContext({
+        grafana: mockDataSource(
+          {
+            uid: 'grafana',
+            name: '-- Grafana --',
+            type: 'grafana',
+            readOnly: true,
+            jsonData: {},
+          },
+          { id: 'grafana', builtIn: true, metrics: true }
+        ),
+      });
+
+      expect(await screen.findByRole('link', { name: 'Add data source' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /add correlation/i })).not.toBeInTheDocument();
+    });
+
+    it('offers to add a correlation when a data source has no query category', async () => {
+      await renderWithContext({
+        mysql: mockDataSource({
+          uid: 'mysql',
+          name: 'mysql',
+          type: 'mysql',
+          readOnly: false,
+          jsonData: {},
+        }),
+      });
+
+      expect(await screen.findByRole('button', { name: /add correlation/i })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Add data source' })).not.toBeInTheDocument();
+    });
+  });
+
   describe('With correlations', () => {
     afterEach(() => {
       mocks.reportInteraction.mockClear();
