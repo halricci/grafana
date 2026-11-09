@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, ScaleOrientation, SortOrder, TooltipDisplayMode, VizOrientation } from '@grafana/schema';
-import { PanelContextProvider } from '@grafana/ui';
+import { PanelContextProvider, type UPlotConfigBuilder } from '@grafana/ui';
 import * as timeSeriesUtils from 'app/core/components/TimeSeries/utils';
 
 import { getPanelProps } from '../test-utils';
@@ -232,8 +232,8 @@ describe('TimeSeriesPanel', () => {
 
     function timeScaleOrientation() {
       for (let i = prepConfigSpy.mock.results.length - 1; i >= 0; i--) {
-        const builder = prepConfigSpy.mock.results[i]?.value;
-        const timeScale = builder?.scales?.find((scale) => scale.props.isTime);
+        const builder = prepConfigSpy.mock.results[i]?.value as UPlotConfigBuilder | undefined;
+        const timeScale = builder?.scales.find((scale) => scale.props.isTime);
         if (timeScale) {
           return {
             passed: prepConfigSpy.mock.calls[i][0].orientation,
