@@ -1,0 +1,22 @@
+{
+  "name": "@grafana/desktop",
+  "version": "13.3.0-pre",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "description": "Electron shell that loads a locally running Grafana",
+  "author": "Grafana Labs",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node ./ensure-electron.js && electron .",
+    "start": "node ./ensure-electron.js && electron .",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">= 22 <25"
+  },
+  "packageManager": "yarn@4.18.1",
+  "dependencies": {
+    "electron": "^45.2.3"
+  }
+}

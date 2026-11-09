@@ -72,6 +72,8 @@
     "start:rspack:noHmr": "NODE_ENV=dev nx exec -- rspack build --config scripts/rspack/rspack.dev.ts --watch",
     "start:rspack:noTsCheck": "yarn start:rspack -- --env noTsCheck=1",
     "start:rspack:noLint": "yarn start:rspack -- --env noTsCheck=1 --env noLint=1",
+    "desktop:dev": "yarn workspace @grafana/desktop dev",
+    "desktop:start": "yarn workspace @grafana/desktop start",
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.ts --profile --json > compilation-stats.json",
     "storybook": "yarn workspace @grafana/ui storybook",
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
@@ -488,7 +490,8 @@
     "packages": [
       "packages/*",
       "public/app/plugins/*/*",
-      "e2e-playwright/test-plugins/*"
+      "e2e-playwright/test-plugins/*",
+      "desktop"
     ]
   },
   "engines": {

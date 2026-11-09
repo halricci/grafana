@@ -192,6 +192,10 @@ const config: KnipConfig = {
       project: defaultProject,
       ignoreDependencies: packageIgnoreDeps,
     },
+    desktop: {
+      entry: ['main.js!', 'ensure-electron.js', 'loopback.test.js'],
+      project: ['*.js'],
+    },
   },
 };
 
