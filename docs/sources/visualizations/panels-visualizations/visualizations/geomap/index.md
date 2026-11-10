@@ -363,7 +363,7 @@ The Night / Day layer displays night and day regions based on the current time r
 | Option | Description |
 | ------ | ----------- |
 | Data | Configures the dataset for the layer. For more information, refer to [Data](#data). |
-| Show | Selects which panel time range endpoint drives the night and day regions. Choose **From** or **To**. |
+| Show | Selects which panel time range endpoint drives the night and day regions. Choose **From**, **To**, or **Both**. **Both** draws the night region at the start and the end of the time range. The start region uses a lighter fill. |
 | Night region color | Picks the color for the night region. |
 | Display sun | Toggles the sun icon. |
 | Opacity | Set the opacity from `0` (transparent) to `1` (opaque). |

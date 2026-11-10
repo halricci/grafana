@@ -8,11 +8,21 @@ import { Fill, Stroke, Style, Circle } from 'ol/style';
 import DayNight from 'ol-ext/source/DayNight';
 import { Subscription } from 'rxjs';
 
-import { type MapLayerRegistryItem, type PanelData } from '@grafana/data';
+import { colorManipulator, type MapLayerRegistryItem, type PanelData } from '@grafana/data';
 
 export enum ShowTime {
   From = 'from',
   To = 'to',
+  Both = 'both',
+}
+
+// Lighten the range-start night so it stays distinct from the range-end fill where the two regions do not overlap.
+const RANGE_START_LIGHTEN = 0.4;
+
+function nightRegionStyle(color: string) {
+  return new Style({
+    fill: new Fill({ color }),
+  });
 }
 
 // Configuration options for Circle overlays
@@ -52,19 +62,25 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
       ...options?.config,
     };
 
-    // DayNight source
+    // DayNight source for the selected time. "Both" keeps this region on the range end.
     const source = new DayNight({});
     const sourceMethods = Object.getPrototypeOf(source);
+    const nightColor = theme.visualization.getColorByName(config.nightColor);
 
     // Night polygon
     const vectorLayer = new VectorImage({
       source,
-      style: new Style({
-        fill: new Fill({
-          color: theme.visualization.getColorByName(config.nightColor),
-        }),
-      }),
+      style: nightRegionStyle(nightColor),
     });
+
+    // Second night polygon for the range start. Absent unless Show is Both, so saved From/To panels keep one region.
+    const fromSource = config.show === ShowTime.Both ? new DayNight({}) : undefined;
+    const fromLayer = fromSource
+      ? new VectorImage({
+          source: fromSource,
+          style: nightRegionStyle(colorManipulator.lighten(nightColor, RANGE_START_LIGHTEN)),
+        })
+      : undefined;
 
     // Night line (for crosshair sharing)
     const nightLineLayer = new VectorImage({
@@ -130,10 +146,11 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
       style: [sunLineStyleDash, sunLineStyle],
     });
 
-    // Build group of layers
+    // Build group of layers. The range-start region is drawn under the range-end region.
     // TODO: add blended night region to "connect" current night region to lines
+    const nightLayers = fromLayer ? [fromLayer, vectorLayer] : [vectorLayer];
     const layer = new LayerGroup({
-      layers: config.sun ? [vectorLayer, sunLayer, sunLineLayer, nightLineLayer] : [vectorLayer, nightLineLayer],
+      layers: config.sun ? [...nightLayers, sunLayer, sunLineLayer, nightLineLayer] : [...nightLayers, nightLineLayer],
     });
 
     // Crosshair sharing subscriptions
@@ -145,18 +162,13 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
       update: (data: PanelData) => {
         const from = new Date(data.timeRange.from.valueOf());
         const to = new Date(data.timeRange.to.valueOf());
-        let selectedTime: Date = new Date();
-        let sunPos: number[] = [];
-        // TODO: add option for "Both"
-        if (config.show === ShowTime.From) {
-          selectedTime = from;
-        } else {
-          selectedTime = to;
-        }
+        // From uses the range start. To and Both keep the primary region (and the sun) on the range end.
+        const primaryTime = config.show === ShowTime.From ? from : to;
 
-        source.setTime(selectedTime);
+        source.setTime(primaryTime);
+        fromSource?.setTime(from);
         if (config.sun) {
-          sunPos = sourceMethods.getSunPosition(selectedTime);
+          const sunPos = sourceMethods.getSunPosition(primaryTime);
           sunFeature.getGeometry()?.setCoordinates(fromLonLat(sunPos));
         }
       },
@@ -170,10 +182,12 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
         builder.addRadio({
           path: 'config.show',
           name: 'Show',
+          description: 'Night region at the start of the time range, the end, or both',
           settings: {
             options: [
               { label: 'From', value: ShowTime.From },
               { label: 'To', value: ShowTime.To },
+              { label: 'Both', value: ShowTime.Both },
             ],
           },
           defaultValue: defaultConfig.show,
