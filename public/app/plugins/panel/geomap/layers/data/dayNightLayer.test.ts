@@ -69,7 +69,9 @@ describe('dayNightLayer', () => {
       addColorPicker: () => builder,
       addBooleanSwitch: () => builder,
     };
-    handler.registerOptionsUI!(builder as unknown as PanelOptionsEditorBuilder<MapLayerOptions<DayNightConfig>>);
+    handler.registerOptionsUI!(builder as unknown as PanelOptionsEditorBuilder<MapLayerOptions<DayNightConfig>>, {
+      data: [],
+    });
     expect(showOptions).toEqual([
       { label: 'From', value: ShowTime.From },
       { label: 'To', value: ShowTime.To },
