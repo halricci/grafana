@@ -1,4 +1,4 @@
-import { render } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 
@@ -37,17 +37,19 @@ describe('CorrelationsPageWrapper', () => {
   });
 
   describe('with the kubernetes feature toggle on', () => {
-    it('uses the K8s correlations hook', () => {
+    it('uses the K8s correlations hook', async () => {
       config.featureToggles = { ...originalFeatureToggles, kubernetesCorrelations: true };
       render(<CorrelationsPageWrapper />);
+      expect(await screen.findByText('There are no correlations configured yet.')).toBeInTheDocument();
       expect(mockUseCorrelationsK8s).toHaveBeenCalled();
     });
   });
 
   describe('with the kubernetes feature toggle off', () => {
-    it('uses the legacy correlations hook', () => {
+    it('uses the legacy correlations hook', async () => {
       config.featureToggles = { ...originalFeatureToggles, kubernetesCorrelations: false };
       render(<CorrelationsPageWrapper />);
+      expect(await screen.findByText('There are no correlations configured yet.')).toBeInTheDocument();
       expect(mockUseCorrelations).toHaveBeenCalled();
     });
   });

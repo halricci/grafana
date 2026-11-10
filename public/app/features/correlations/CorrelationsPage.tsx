@@ -3,7 +3,7 @@ import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceListItem, type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   type CorrelationData,
@@ -11,6 +11,7 @@ import {
   type FetchError,
   isFetchError,
   reportInteraction,
+  useDataSourceInstanceList,
 } from '@grafana/runtime';
 import {
   Badge,
@@ -62,6 +63,16 @@ const loaderWrapper = css({
   justifyContent: 'center',
 });
 
+// Built-in datasources are present on every instance, so they do not count as a configured source.
+function isConfiguredDataSource(dataSource: DataSourceInstanceListItem): boolean {
+  return (
+    !dataSource.meta.builtIn &&
+    dataSource.meta.id !== 'grafana' &&
+    dataSource.meta.id !== 'mixed' &&
+    dataSource.meta.id !== 'dashboard'
+  );
+}
+
 /*
     We need to support pagination for cursor based (app platform), and offset based (legacy) apis
     cursor based pagination just does page forward/back with no list
@@ -90,6 +101,9 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
   };
 
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+  const { items: dataSources, isLoading: isLoadingDataSources, error: dataSourcesError } = useDataSourceInstanceList();
+  // A failed list request must not claim there are no data sources.
+  const hasDataSources = Boolean(dataSourcesError) || dataSources.some(isConfiguredDataSource);
   const corrData = correlations?.correlations ?? [];
   const hasWritable = corrData.some(negate(isCorrelationsReadOnly));
 
@@ -179,7 +193,8 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
     [RowActions, canWriteCorrelations, hasWritable]
   );
 
-  const showEmptyListCTA = corrData.length === 0 && !isAdding && !error;
+  const isEmptyCorrelationList = corrData.length === 0 && !isAdding && !error;
+  const showEmptyListCTA = isEmptyCorrelationList && !isLoadingDataSources;
   const addButton = canWriteCorrelations && corrData.length !== 0 && !isAdding && (
     <Button icon="plus" onClick={() => setIsAdding(true)}>
       <Trans i18nKey="correlations.add-new">Add new</Trans>
@@ -203,13 +218,17 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
     >
       <Page.Contents>
         <div>
-          {isLoading && (
+          {(isLoading || (isEmptyCorrelationList && isLoadingDataSources)) && (
             <div className={loaderWrapper}>
               <LoadingPlaceholder text={t('correlations.list.loading', 'loading...')} />
             </div>
           )}
           {showEmptyListCTA && (
-            <EmptyCorrelationsCTA canWriteCorrelations={canWriteCorrelations} onClick={() => setIsAdding(true)} />
+            <EmptyCorrelationsCTA
+              canWriteCorrelations={canWriteCorrelations}
+              hasDataSources={hasDataSources}
+              onClick={() => setIsAdding(true)}
+            />
           )}
           {
             // This error is not actionable, it'd be nice to have a recovery button

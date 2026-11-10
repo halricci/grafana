@@ -219,6 +219,36 @@ afterAll(() => {
 });
 
 describe('CorrelationsPage - Legacy', () => {
+  describe('With no data sources', () => {
+    it('asks to add a data source instead of a correlation', async () => {
+      await renderWithContext();
+
+      const addDataSource = await screen.findByRole('link', { name: 'Add data source' });
+      expect(addDataSource).toHaveAttribute('href', '/connections/datasources/new');
+      expect(screen.getByText('Add a data source first')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /add correlation/i })).not.toBeInTheDocument();
+    });
+
+    it('asks to add a data source when only built-in data sources exist', async () => {
+      await renderWithContext({
+        grafana: mockDataSource(
+          {
+            uid: '-- Grafana --',
+            name: '-- Grafana --',
+            type: 'datasource',
+          },
+          { id: 'grafana', builtIn: true, metrics: true }
+        ),
+      });
+
+      expect(await screen.findByRole('link', { name: 'Add data source' })).toHaveAttribute(
+        'href',
+        '/connections/datasources/new'
+      );
+      expect(screen.queryByRole('button', { name: /add correlation/i })).not.toBeInTheDocument();
+    });
+  });
+
   describe('With no correlations', () => {
     beforeEach(async () => {
       await renderWithContext({
