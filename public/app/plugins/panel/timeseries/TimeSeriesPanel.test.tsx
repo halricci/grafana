@@ -11,8 +11,15 @@ import {
   type PanelProps,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { PanelContextProvider } from '@grafana/ui';
+import {
+  LegendDisplayMode,
+  ScaleDirection,
+  ScaleOrientation,
+  SortOrder,
+  TooltipDisplayMode,
+  VizOrientation,
+} from '@grafana/schema';
+import { PanelContextProvider, UPlotConfigBuilder } from '@grafana/ui';
 
 import { getPanelProps } from '../test-utils';
 
@@ -181,6 +188,54 @@ describe('TimeSeriesPanel', () => {
       expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
       expect(screen.getByText(/Unable to render data/)).toBeVisible();
       expect(screen.getByText(/query A returned a time field with null values/i)).toBeVisible();
+    });
+  });
+
+  describe('orientation', () => {
+    let addScale: jest.SpyInstance;
+
+    beforeEach(() => {
+      addScale = jest.spyOn(UPlotConfigBuilder.prototype, 'addScale');
+    });
+
+    afterEach(() => {
+      addScale.mockRestore();
+    });
+
+    it.each([
+      {
+        name: 'omitted',
+        options: {},
+        time: { orientation: ScaleOrientation.Horizontal, direction: ScaleDirection.Right },
+        value: { orientation: ScaleOrientation.Vertical, direction: ScaleDirection.Up },
+      },
+      {
+        name: 'auto',
+        options: { orientation: VizOrientation.Auto },
+        time: { orientation: ScaleOrientation.Horizontal, direction: ScaleDirection.Right },
+        value: { orientation: ScaleOrientation.Vertical, direction: ScaleDirection.Up },
+      },
+      {
+        name: 'horizontal',
+        options: { orientation: VizOrientation.Horizontal },
+        time: { orientation: ScaleOrientation.Horizontal, direction: ScaleDirection.Right },
+        value: { orientation: ScaleOrientation.Vertical, direction: ScaleDirection.Up },
+      },
+      {
+        name: 'vertical',
+        options: { orientation: VizOrientation.Vertical },
+        time: { orientation: ScaleOrientation.Vertical, direction: ScaleDirection.Up },
+        value: { orientation: ScaleOrientation.Horizontal, direction: ScaleDirection.Right },
+      },
+    ])('passes $name orientation through to the time and value scales', ({ options, time, value }) => {
+      renderPanel(options);
+
+      const scales = addScale.mock.calls.map(([props]) => props);
+      const timeScale = scales.find((scale) => scale.isTime);
+      const valueScale = scales.find((scale) => !scale.isTime);
+
+      expect(timeScale).toMatchObject(time);
+      expect(valueScale).toMatchObject(value);
     });
   });
 

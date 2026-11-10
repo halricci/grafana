@@ -215,6 +215,15 @@ For more information, refer to the [Configure legend documentation](https://graf
 
 {{< docs/shared lookup="visualizations/axis-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
+#### Orientation
+
+Choose the direction of the time axis.
+The default is **Horizontal**, which is also how a saved panel renders when this option is omitted.
+
+- **Auto**: Time stays on the x-axis, the same layout as **Horizontal**.
+- **Horizontal**: Time is drawn on the x-axis.
+- **Vertical**: Time is drawn on the y-axis. Annotations, exemplars, and the outside-range marker are hidden.
+
 ### Annotation options
 
 {{< docs/shared lookup="visualizations/annotations/options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
