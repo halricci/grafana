@@ -104,7 +104,7 @@ func TestIntegrationProvisioning_GitOAuthConnection(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_GitOAuthConnectionRejectsPrivateEndpoints(t *testing.T) {
-	helper := giteaHelper(t)
+	helper := sharedGitHelper(t)
 
 	_, err := helper.Connections.Resource.Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": provisioning.APIVERSION,
