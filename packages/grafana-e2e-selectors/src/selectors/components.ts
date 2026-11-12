@@ -248,6 +248,24 @@ export const versionedComponents = {
     timeRangeOption: {
       '13.2.0': (from: string, to: string) => `data-testid TimePicker time range option ${from} to ${to}`,
     },
+    personalQuickRanges: {
+      '13.3.0': 'data-testid TimePicker personal quick ranges',
+    },
+    savePersonalQuickRange: {
+      '13.3.0': 'data-testid TimePicker save personal quick range',
+    },
+    removePersonalQuickRange: {
+      '13.3.0': (from: string, to: string) => `data-testid TimePicker remove personal quick range ${from} to ${to}`,
+    },
+    personalQuickRangeFrom: {
+      '13.3.0': 'data-testid TimePicker personal quick range from',
+    },
+    personalQuickRangeTo: {
+      '13.3.0': 'data-testid TimePicker personal quick range to',
+    },
+    addPersonalQuickRange: {
+      '13.3.0': 'data-testid TimePicker add personal quick range',
+    },
   },
   DataSourcePermissions: {
     form: { '9.5.0': () => 'form[name="addPermission"]' },
