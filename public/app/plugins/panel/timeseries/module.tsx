@@ -1,5 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { VizOrientation } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
@@ -32,11 +33,34 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
       showIf: (c) => c.legend.showLegend,
     });
 
+    const axisCategory = [t('timeseries.category-axis', 'Axis')];
+
+    builder.addRadio({
+      path: 'orientation',
+      name: t('timeseries.name-orientation', 'Orientation'),
+      category: axisCategory,
+      settings: {
+        options: [
+          { value: VizOrientation.Auto, label: t('timeseries.orientation-options.label-auto', 'Auto') },
+          {
+            value: VizOrientation.Horizontal,
+            label: t('timeseries.orientation-options.label-horizontal', 'Horizontal'),
+          },
+          {
+            value: VizOrientation.Vertical,
+            label: t('timeseries.orientation-options.label-vertical', 'Vertical'),
+          },
+        ],
+      },
+      // Horizontal matches the renderer default, so a saved panel with no orientation stays on the time x-axis.
+      defaultValue: VizOrientation.Horizontal,
+    });
+
     builder.addCustomEditor({
       id: 'timezone',
       name: t('timeseries.name-time-zone', 'Time zone'),
       path: 'timezone',
-      category: [t('timeseries.category-axis', 'Axis')],
+      category: axisCategory,
       editor: TimezonesEditor,
       defaultValue: undefined,
     });
