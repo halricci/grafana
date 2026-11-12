@@ -270,6 +270,16 @@ func TestAllowQuery(t *testing.T) {
 			q:    `SELECT @myvar FROM a`,
 			err:  &ErrorWithCategory{},
 		},
+		{
+			name: "blocked: CAST AS BINARY",
+			q:    `SELECT CAST(value AS BINARY) FROM a`,
+			err:  &ErrorWithCategory{},
+		},
+		{
+			name: "blocked: CONVERT to BINARY",
+			q:    `SELECT CONVERT(value, BINARY) FROM a`,
+			err:  &ErrorWithCategory{},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
