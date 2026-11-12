@@ -40,6 +40,7 @@ import { AddControlsButton } from './ControlsAddButton';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardModePicker } from './DashboardModePicker';
+import { DashboardQuickRangeProvider } from './DashboardQuickRangeProvider';
 import { type DashboardScene } from './DashboardScene';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
@@ -256,7 +257,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
         {!hideTimeControls && (
           <div className={styles.fixedControls}>
-            <timePicker.Component model={timePicker} />
+            <DashboardQuickRangeProvider timePicker={timePicker}>
+              <timePicker.Component model={timePicker} />
+            </DashboardQuickRangeProvider>
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}

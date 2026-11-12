@@ -66,6 +66,8 @@ Adjust dashboard time settings when you want to change the dashboard timezone, t
    - **Now delay:** Override the `now` time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
    - **Week start:** Choose the day the week starts on.
    - **Hide time picker:** Select this option if you do not want Grafana to display the time picker.
+   - **Dashboard ranges:** Ranges an author attached to this dashboard. They are saved with the dashboard, and everyone who opens it sees them.
+   - **Your ranges:** Relative ranges saved in this browser for you. They are available the next time you open a dashboard, and saving or removing one does not change the dashboard.
    - **Refresh live dashboards:** Select this option to continuously update panels when the time range includes the current time.
 
 1. Click **Save**.

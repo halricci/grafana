@@ -12,6 +12,8 @@ import { t } from '@grafana/i18n';
 import { type TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 
+import { usePersonalQuickRanges } from './personalQuickRanges';
+
 const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
 const MAX_HISTORY_ITEMS = 4;
 
@@ -24,6 +26,8 @@ interface TimePickerHistoryItem {
 }
 
 export const TimePickerWithHistory = (props: Props) => {
+  const [personalRanges, setPersonalRanges] = usePersonalQuickRanges();
+
   return (
     <LocalStorageValueProvider<unknown> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
       {(values, onSaveToStore) => {
@@ -33,6 +37,8 @@ export const TimePickerWithHistory = (props: Props) => {
         return (
           <TimeRangePicker
             {...props}
+            personalQuickRanges={personalRanges}
+            onPersonalQuickRangesChange={setPersonalRanges}
             history={history}
             onChange={(value) => {
               onAppendToHistory(value, validHistory, onSaveToStore);
