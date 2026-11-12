@@ -215,6 +215,16 @@ For more information, refer to the [Configure legend documentation](https://graf
 
 {{< docs/shared lookup="visualizations/axis-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
+#### Orientation
+
+**Orientation** chooses which axis shows time. The control is in the **Axis** section of the panel editor.
+
+- **Auto**: Keeps time on the x-axis, the same layout as **Horizontal**.
+- **Horizontal**: Puts time on the x-axis and values on the y-axis. This is the default.
+- **Vertical**: Puts time on the y-axis and values on the x-axis.
+
+A saved dashboard that doesn't set **Orientation** keeps the horizontal layout. **Vertical** is a simpler chart: annotation markers, exemplars, and the outside-range prompt aren't available in that layout.
+
 ### Annotation options
 
 {{< docs/shared lookup="visualizations/annotations/options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
