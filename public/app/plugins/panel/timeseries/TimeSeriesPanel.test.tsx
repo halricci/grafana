@@ -11,8 +11,9 @@ import {
   type PanelProps,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { PanelContextProvider } from '@grafana/ui';
+import { LegendDisplayMode, ScaleOrientation, SortOrder, TooltipDisplayMode, VizOrientation } from '@grafana/schema';
+import { PanelContextProvider, type UPlotConfigBuilder } from '@grafana/ui';
+import * as timeSeriesUtils from 'app/core/components/TimeSeries/utils';
 
 import { getPanelProps } from '../test-utils';
 
@@ -181,6 +182,58 @@ describe('TimeSeriesPanel', () => {
       expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
       expect(screen.getByText(/Unable to render data/)).toBeVisible();
       expect(screen.getByText(/query A returned a time field with null values/i)).toBeVisible();
+    });
+  });
+
+  describe('orientation', () => {
+    let prepSpy: jest.SpyInstance<ReturnType<typeof timeSeriesUtils.preparePlotConfigBuilder>>;
+
+    afterEach(() => {
+      prepSpy?.mockRestore();
+    });
+
+    it.each([
+      {
+        name: 'keeps time on the x-axis when orientation is omitted',
+        orientation: undefined,
+        timeScale: ScaleOrientation.Horizontal,
+        valueScale: ScaleOrientation.Vertical,
+      },
+      {
+        name: 'keeps time on the x-axis when orientation is auto',
+        orientation: VizOrientation.Auto,
+        timeScale: ScaleOrientation.Horizontal,
+        valueScale: ScaleOrientation.Vertical,
+      },
+      {
+        name: 'keeps time on the x-axis when orientation is horizontal',
+        orientation: VizOrientation.Horizontal,
+        timeScale: ScaleOrientation.Horizontal,
+        valueScale: ScaleOrientation.Vertical,
+      },
+      {
+        name: 'puts time on the y-axis when orientation is vertical',
+        orientation: VizOrientation.Vertical,
+        timeScale: ScaleOrientation.Vertical,
+        valueScale: ScaleOrientation.Horizontal,
+      },
+    ])('$name', async ({ orientation, timeScale, valueScale }) => {
+      prepSpy = jest.spyOn(timeSeriesUtils, 'preparePlotConfigBuilder');
+      renderPanel({ orientation });
+
+      await waitFor(() =>
+        expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
+      );
+
+      const passed = prepSpy.mock.calls.at(-1)?.[0].orientation;
+      expect(passed).toBe(orientation);
+
+        const builder = prepSpy.mock.results.at(-1)?.value as UPlotConfigBuilder | undefined;
+        expect(builder?.scales.find((scale) => scale.props.scaleKey === 'x')?.props.orientation).toBe(timeScale);
+
+        const valueScales = builder?.scales.filter((scale) => scale.props.scaleKey !== 'x') ?? [];
+        expect(valueScales).toHaveLength(1);
+        expect(valueScales[0]?.props.orientation).toBe(valueScale);
     });
   });
 
