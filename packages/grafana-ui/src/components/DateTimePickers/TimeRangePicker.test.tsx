@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime, dateTimeFormat, guessBrowserTimeZone, makeTimeRange, type TimeRange } from '@grafana/data';
@@ -7,6 +7,8 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { TimeRangeProvider } from '../../graveyard/TimeRangeContext/TimeRangeContext';
 
 import { TimePickerTooltip, TimeRangePicker } from './TimeRangePicker';
+import { PersonalQuickRangesProvider } from './TimeRangePicker/PersonalQuickRangesProvider';
+import { PERSONAL_QUICK_RANGES_STORAGE_KEY } from './TimeRangePicker/personalQuickRanges';
 
 const selectors = e2eSelectors.components.TimePicker;
 
@@ -330,5 +332,66 @@ describe('TimePickerTooltip', () => {
 
     expect(screen.getByText('Accra')).toBeInTheDocument();
     expect(screen.getByText('GMT')).toBeInTheDocument();
+  });
+});
+
+describe('personal quick ranges', () => {
+  const historyRange: TimeRange = {
+    from: dateTime('2019-12-17T07:48:27.433Z'),
+    to: dateTime('2019-12-17T07:49:27.433Z'),
+    raw: {
+      from: dateTime('2019-12-17T07:48:27.433Z'),
+      to: dateTime('2019-12-17T07:49:27.433Z'),
+    },
+  };
+
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('saves and removes a personal range without changing the dashboard list or history', async () => {
+    const onChange = jest.fn();
+    render(
+      <PersonalQuickRangesProvider quickRangesFromDashboard>
+        <TimeRangePicker
+          onChangeTimeZone={() => {}}
+          onChange={onChange}
+          value={relativeValue}
+          onMoveBackward={() => {}}
+          onMoveForward={() => {}}
+          onZoom={() => {}}
+          timeZone="utc"
+          widthOverride={1400}
+          history={[historyRange]}
+          quickRanges={[{ from: 'now-15m', to: 'now', display: 'Last 15 minutes' }]}
+        />
+      </PersonalQuickRangesProvider>
+    );
+
+    await userEvent.click(screen.getByTestId(selectors.openButton));
+
+    const yours = screen.getByRole('region', { name: 'Your ranges' });
+    const dashboard = screen.getByRole('region', { name: 'Dashboard ranges' });
+    const recent = screen.getByRole('region', { name: 'Recently used absolute ranges' });
+    expect(within(dashboard).getByText('Last 15 minutes')).toBeInTheDocument();
+    expect(within(yours).getByText('No saved ranges yet.')).toBeInTheDocument();
+    expect(within(recent).getByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
+
+    await userEvent.click(within(yours).getByRole('button', { name: 'Save current range' }));
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(within(yours).getByText('Last 1 hour')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem(PERSONAL_QUICK_RANGES_STORAGE_KEY) ?? 'null')).toEqual([
+      { from: 'now-1h', to: 'now', display: 'Last 1 hour' },
+    ]);
+    expect(within(dashboard).getByText('Last 15 minutes')).toBeInTheDocument();
+    expect(within(recent).getByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
+
+    await userEvent.click(within(yours).getByRole('button', { name: 'Remove Last 1 hour' }));
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(within(yours).queryByText('Last 1 hour')).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem(PERSONAL_QUICK_RANGES_STORAGE_KEY) ?? 'null')).toEqual([]);
+    expect(within(recent).getByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
   });
 });

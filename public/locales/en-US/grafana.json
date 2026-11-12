@@ -8086,11 +8086,25 @@
       "unavailable-title": "Template metadata unavailable"
     },
     "time-picker": {
+      "add-dashboard-range": "Add dashboard range",
+      "add-personal-range": "Save personal range",
+      "dashboard-ranges-description": "Saved with this dashboard for everyone who opens it. Custom ranges replace the built-in list. Personal ranges stay on this browser and are not saved here.",
+      "dashboard-ranges-empty": "Using the built-in quick ranges.",
+      "dashboard-ranges-label": "Dashboard ranges",
       "hide-time-picker": "Hide time picker",
+      "invalid-range": "Enter a valid from and to.",
       "now-delay-description": "Exclude recent data that may be incomplete.",
       "now-delay-label": "Now delay",
+      "personal-ranges-description": "Saved in this browser. Adding or removing a personal range does not change the dashboard.",
+      "personal-ranges-empty": "No saved ranges yet.",
+      "personal-ranges-label": "Your ranges",
+      "range-from-placeholder": "now-15m",
+      "range-name-placeholder": "Name",
+      "range-to-placeholder": "now",
       "refresh-live-dashboards-description": "Continuously update panels when the time range includes the current time",
       "refresh-live-dashboards-label": "Refresh live dashboards",
+      "remove-range": "Remove {{range}}",
+      "restore-builtin-ranges": "Restore built-in ranges",
       "time-options-label": "Time options",
       "time-zone-label": "Time zone",
       "week-start-label": "Week start"
@@ -16976,6 +16990,17 @@
       "fiscal-year-start": "Fiscal year start month",
       "time-zone-option": "Time zone",
       "time-zone-selection": "Time zone selection"
+    },
+    "personal": {
+      "empty": "No saved ranges yet.",
+      "remove": "Remove {{range}}",
+      "save": "Save current range",
+      "saved": "Saved",
+      "title": "Your ranges"
+    },
+    "quick": {
+      "builtin-title": "Quick ranges",
+      "dashboard-title": "Dashboard ranges"
     },
     "range-content": {
       "apply-button": "Apply time range",

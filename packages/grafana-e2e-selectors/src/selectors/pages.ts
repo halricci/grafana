@@ -471,6 +471,45 @@ export const versionedPages = {
         title: {
           '11.2.0': 'General',
         },
+        dashboardQuickRanges: {
+          fromInput: {
+            '13.3.0': 'data-testid Dashboard settings dashboard quick range from-input',
+          },
+          toInput: {
+            '13.3.0': 'data-testid Dashboard settings dashboard quick range to-input',
+          },
+          nameInput: {
+            '13.3.0': 'data-testid Dashboard settings dashboard quick range name-input',
+          },
+          addButton: {
+            '13.3.0': 'data-testid Dashboard settings dashboard quick range add-button',
+          },
+          restoreButton: {
+            '13.3.0': 'data-testid Dashboard settings dashboard quick range restore-button',
+          },
+          row: {
+            '13.3.0': (from: string, to: string) =>
+              `data-testid Dashboard settings dashboard quick range row ${from} to ${to}`,
+          },
+        },
+        personalQuickRanges: {
+          fromInput: {
+            '13.3.0': 'data-testid Dashboard settings personal quick range from-input',
+          },
+          toInput: {
+            '13.3.0': 'data-testid Dashboard settings personal quick range to-input',
+          },
+          nameInput: {
+            '13.3.0': 'data-testid Dashboard settings personal quick range name-input',
+          },
+          addButton: {
+            '13.3.0': 'data-testid Dashboard settings personal quick range add-button',
+          },
+          row: {
+            '13.3.0': (from: string, to: string) =>
+              `data-testid Dashboard settings personal quick range row ${from} to ${to}`,
+          },
+        },
       },
       Annotations: {
         Edit: {

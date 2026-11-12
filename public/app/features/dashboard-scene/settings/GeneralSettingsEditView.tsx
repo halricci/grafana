@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 
+import { type TimeOption } from '@grafana/data';
 import { type SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
 import { Spinner, type WeekStart } from '@grafana/ui';
@@ -141,6 +142,10 @@ export class GeneralSettingsEditView
     this.getDashboardControls()?.setState({
       hideTimeControls: value,
     });
+  };
+
+  public onQuickRangesChange = (quickRanges?: TimeOption[]) => {
+    this.getDashboardControls().state.timePicker.setState({ quickRanges });
   };
 
   public onLiveNowChange = (enable: boolean) => {

@@ -41,6 +41,7 @@ import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardModePicker } from './DashboardModePicker';
 import { type DashboardScene } from './DashboardScene';
+import { DashboardTimePicker } from './DashboardTimePicker';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
@@ -256,7 +257,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
         {!hideTimeControls && (
           <div className={styles.fixedControls}>
-            <timePicker.Component model={timePicker} />
+            <DashboardTimePicker model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
