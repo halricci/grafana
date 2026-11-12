@@ -244,6 +244,84 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 	})
 }
 
+func Test_redirectCDNPluginAssetOmitsLoginAndReferer(t *testing.T) {
+	const (
+		pluginID  = "cdn-plugin"
+		version   = "1.0.0"
+		assetPath = "module.js"
+		login     = "alice"
+		referer   = "http://grafana.example/d/abc?orgId=1&var-password=secret"
+	)
+	remoteURL := "https://cdn.example.com/cdn-plugin/1.0.0/public/plugins/cdn-plugin/module.js"
+
+	cfg := setting.NewCfg()
+	cfg.PluginsCDNURLTemplate = "https://cdn.example.com"
+	cfg.PluginSettings = map[string]map[string]string{
+		pluginID: {"cdn": "true"},
+	}
+
+	logger := &logtest.Fake{}
+	hs := &HTTPServer{
+		log: logger,
+		pluginsCDNService: pluginscdn.ProvideService(&config.PluginManagementCfg{
+			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
+			PluginSettings:        cfg.PluginSettings,
+		}),
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/public/plugins/"+pluginID+"/"+assetPath, nil)
+	req.Header.Set("Referer", referer)
+	recorder := httptest.NewRecorder()
+	c := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Req:  req,
+			Resp: web.NewResponseWriter(http.MethodGet, recorder),
+		},
+		SignedInUser: &user.SignedInUser{Login: login},
+	}
+
+	counter := pluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
+		"plugin_id":      pluginID,
+		"plugin_version": version,
+	})
+	var m dto.Metric
+	require.NoError(t, counter.Write(&m))
+	before := m.Counter.GetValue()
+
+	hs.redirectCDNPluginAsset(c, pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   pluginID,
+			Info: plugins.Info{Version: version},
+		},
+	}, assetPath)
+
+	require.Equal(t, http.StatusTemporaryRedirect, recorder.Code)
+	require.Equal(t, remoteURL, recorder.Header().Get("Location"))
+
+	require.NoError(t, counter.Write(&m))
+	require.Equal(t, before+1, m.Counter.GetValue())
+
+	require.Equal(t, 1, logger.WarnLogs.Calls)
+	require.Equal(t, "plugin cdn redirect hit", logger.WarnLogs.Message)
+	require.Equal(t, pluginID, ctxValue(t, logger.WarnLogs.Ctx, "pluginID"))
+	require.Equal(t, version, ctxValue(t, logger.WarnLogs.Ctx, "pluginVersion"))
+	require.Equal(t, assetPath, ctxValue(t, logger.WarnLogs.Ctx, "assetPath"))
+	require.Equal(t, remoteURL, ctxValue(t, logger.WarnLogs.Ctx, "remoteURL"))
+	for i := 0; i+1 < len(logger.WarnLogs.Ctx); i += 2 {
+		key, ok := logger.WarnLogs.Ctx[i].(string)
+		require.True(t, ok)
+		require.NotContains(t, []string{"referer", "user", "login"}, key)
+	}
+	for _, v := range logger.WarnLogs.Ctx {
+		s, ok := v.(string)
+		if !ok {
+			continue
+		}
+		require.NotContains(t, s, login)
+		require.NotContains(t, s, referer)
+	}
+}
+
 func Test_GetPluginAssets(t *testing.T) {
 	pluginID := "test-plugin"
 	pluginDir := "."
