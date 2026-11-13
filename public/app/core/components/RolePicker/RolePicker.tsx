@@ -192,8 +192,9 @@ export const RolePicker = ({
     const options = roleOptions.map((r) => ({ ...r, delegatable: canUpdateRoles && r.delegatable }));
 
     if (query && query.trim() !== '') {
-      // TODO should this filter on `displayName` not (or in addition to) `name`?
-      return options.filter((option) => option.name?.toLowerCase().includes(query.toLowerCase()));
+      const normalizedQuery = query.toLowerCase();
+      const matches = (value?: string) => value?.toLowerCase().includes(normalizedQuery);
+      return options.filter((option) => matches(option.name) || matches(option.displayName ?? option.name));
     }
     return options;
   };
