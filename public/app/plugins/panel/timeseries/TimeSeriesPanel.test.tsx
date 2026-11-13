@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, ScaleOrientation, SortOrder, TooltipDisplayMode, VizOrientation } from '@grafana/schema';
-import { PanelContextProvider } from '@grafana/ui';
+import { PanelContextProvider, type UPlotConfigBuilder } from '@grafana/ui';
 import * as timeSeriesUtils from 'app/core/components/TimeSeries/utils';
 
 import { getPanelProps } from '../test-utils';
@@ -265,7 +265,7 @@ describe('TimeSeriesPanel', () => {
 
         expect(applied.length).toBeGreaterThan(0);
 
-        const builder = applied[applied.length - 1].result.value;
+        const builder = applied[applied.length - 1].result.value as UPlotConfigBuilder;
         const timeScale = builder.scales.find((scale) => scale.props.scaleKey === 'x');
         const valueScale = builder.scales.find((scale) => scale.props.scaleKey !== 'x');
 

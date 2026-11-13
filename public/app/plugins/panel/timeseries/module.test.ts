@@ -18,7 +18,7 @@ describe('timeseries module', () => {
 
     expect(orientation?.defaultValue).toBe(VizOrientation.Horizontal);
     expect(orientation?.category).toEqual(['Axis']);
-    expect(orientation?.settings?.options?.map((option) => option.value)).toEqual([
+    expect(orientation?.settings?.options?.map((option: { value?: VizOrientation }) => option.value)).toEqual([
       VizOrientation.Auto,
       VizOrientation.Horizontal,
       VizOrientation.Vertical,
