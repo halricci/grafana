@@ -211,6 +211,14 @@ The tooltip also provides the following options:
 
 For more information, refer to the [Configure legend documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-legend/#series-visibility).
 
+### Orientation
+
+The **Axis** section includes **Orientation**, which chooses the axis that shows time. The default is **Horizontal**. A saved dashboard that omits the option renders the same way.
+
+- **Auto**: Time stays on the x-axis, the same as Horizontal.
+- **Horizontal**: Time is on the x-axis and values are on the y-axis.
+- **Vertical**: Time is on the y-axis and values are on the x-axis. Annotations, exemplars, and the outside-range prompt stay hidden, because those overlays only support a horizontal time axis.
+
 ### Axis options
 
 {{< docs/shared lookup="visualizations/axis-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
