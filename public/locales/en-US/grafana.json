@@ -17070,6 +17070,7 @@
         }
       }
     },
+    "description-orientation": "Auto and Horizontal keep time on the x-axis. Vertical puts time on the y-axis.",
     "insert-nulls-editor": {
       "disconnect-options": {
         "label-never": "Never",
@@ -17093,9 +17094,15 @@
       "title-the-input-expects-a-segment-list": "The input expects a segment list",
       "tooltip-help": "Help"
     },
+    "name-orientation": "Orientation",
     "name-time-zone": "Time zone",
     "nulls-threshold-input": {
       "placeholder-never": "Never"
+    },
+    "orientation-options": {
+      "label-auto": "Auto",
+      "label-horizontal": "Horizontal",
+      "label-vertical": "Vertical"
     },
     "outside-range-plugin": {
       "data-outside-time-range": "Data outside time range",

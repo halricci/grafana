@@ -11,8 +11,9 @@ import {
   type PanelProps,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { PanelContextProvider } from '@grafana/ui';
+import { LegendDisplayMode, ScaleOrientation, SortOrder, TooltipDisplayMode, VizOrientation } from '@grafana/schema';
+import { PanelContextProvider, type UPlotConfigBuilder } from '@grafana/ui';
+import * as timeSeriesUtils from 'app/core/components/TimeSeries/utils';
 
 import { getPanelProps } from '../test-utils';
 
@@ -215,6 +216,64 @@ describe('TimeSeriesPanel', () => {
         ...props.options,
         legend: { ...props.options.legend, facetedFilterPinned: false },
       });
+    });
+  });
+
+  describe('orientation', () => {
+    it.each([
+      {
+        name: 'omitted',
+        options: {},
+        passed: undefined,
+        timeAxis: ScaleOrientation.Horizontal,
+        valueAxis: ScaleOrientation.Vertical,
+      },
+      {
+        name: 'auto',
+        options: { orientation: VizOrientation.Auto },
+        passed: VizOrientation.Auto,
+        timeAxis: ScaleOrientation.Horizontal,
+        valueAxis: ScaleOrientation.Vertical,
+      },
+      {
+        name: 'horizontal',
+        options: { orientation: VizOrientation.Horizontal },
+        passed: VizOrientation.Horizontal,
+        timeAxis: ScaleOrientation.Horizontal,
+        valueAxis: ScaleOrientation.Vertical,
+      },
+      {
+        name: 'vertical',
+        options: { orientation: VizOrientation.Vertical },
+        passed: VizOrientation.Vertical,
+        timeAxis: ScaleOrientation.Vertical,
+        valueAxis: ScaleOrientation.Horizontal,
+      },
+    ])('passes $name orientation through to the plot scales', async ({ options, passed, timeAxis, valueAxis }) => {
+      const spy = jest.spyOn(timeSeriesUtils, 'preparePlotConfigBuilder');
+
+      try {
+        renderPanel(options);
+
+        await waitFor(() =>
+          expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
+        );
+
+        const applied = spy.mock.calls
+          .map((args, index) => ({ args, result: spy.mock.results[index] }))
+          .filter(({ args, result }) => args[0].orientation === passed && result.type === 'return');
+
+        expect(applied.length).toBeGreaterThan(0);
+
+        const builder = applied[applied.length - 1].result.value as UPlotConfigBuilder;
+        const timeScale = builder.scales.find((scale) => scale.props.scaleKey === 'x');
+        const valueScale = builder.scales.find((scale) => scale.props.scaleKey !== 'x');
+
+        expect(timeScale?.props.orientation).toBe(timeAxis);
+        expect(valueScale?.props.orientation).toBe(valueAxis);
+      } finally {
+        spy.mockRestore();
+      }
     });
   });
 
